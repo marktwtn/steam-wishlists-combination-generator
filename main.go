@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"strconv"
 
 	"fyne.io/fyne/v2"
@@ -110,14 +109,6 @@ func main() {
 		down.Add(widget.NewButton("產生組合結果並存檔", func() {
 			combinations = generate_all_combination(wishitems)
 			acceptable_combination_list = get_acceptable_combination(combinations)
-			for _, ele := range acceptable_combination_list {
-				fmt.Println("")
-				fmt.Println("New Combination:")
-				fmt.Println(ele.total_price)
-				for _, item := range ele.wishitems_index {
-					fmt.Println(wishitems[item].name)
-				}
-			}
 			file_save.Show()
 		}))
 
