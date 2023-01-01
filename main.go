@@ -149,7 +149,7 @@ func get_acceptable_combination(combinations [][]Combination) []Combination {
 	var diff_val, _ = strconv.Atoi(diff)
 	for _, outer_ele := range combinations {
 		for _, ele := range outer_ele {
-			if ele.total_price%100 <= uint(diff_val) {
+			if ele.total_price >= 100 && ele.total_price%100 <= uint(diff_val) {
 				acceptable_combination = append(acceptable_combination, ele)
 			}
 		}
