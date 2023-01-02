@@ -45,7 +45,6 @@ func main() {
 	new_app := app.New()
 	new_app.Settings().SetTheme(&new_theme{})
 	window := new_app.NewWindow("Steam願望清單最佳組合程式")
-	window.Resize(fyne.NewSize(1600, 900))
 	window.SetMaster()
 	main_box := container.NewGridWithColumns(1)
 
