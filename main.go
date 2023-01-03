@@ -25,6 +25,7 @@ type Combination struct {
 
 var wishlist_page = ""
 var wishitems []Wishitem
+var wishitems_with_selected []Wishitem
 var wishitems_without_selected []Wishitem
 var combinations [][]Combination
 var diff_binding binding.String = binding.NewString()
@@ -115,11 +116,17 @@ func main() {
 	}))
 
 	down.Add(widget.NewButton("產生組合結果並存檔", func() {
+		wishitems_with_selected = []Wishitem{}
 		wishitems_without_selected = []Wishitem{}
 		var without_selected_index = 0
+		var selected_index = 0
 		for index, ele := range check_list {
 			selected, _ := ele.Get()
-			if !selected {
+			if selected {
+				wishitems_with_selected = append(wishitems_with_selected, wishitems[index])
+				wishitems_with_selected[selected_index].index = uint(selected_index)
+				selected_index++
+			} else {
 				wishitems_without_selected = append(wishitems_without_selected, wishitems[index])
 				wishitems_without_selected[without_selected_index].index = uint(without_selected_index)
 				without_selected_index++
@@ -164,9 +171,13 @@ func get_acceptable_combination(combinations [][]Combination) []Combination {
 	var acceptable_combination []Combination
 	var diff, _ = diff_binding.Get()
 	var diff_val, _ = strconv.Atoi(diff)
+	var selected_total_price uint = 0
+	for _, ele := range wishitems_with_selected {
+		selected_total_price += ele.discount_price
+	}
 	for _, outer_ele := range combinations {
 		for _, ele := range outer_ele {
-			if ele.total_price >= 100 && ele.total_price%100 <= uint(diff_val) {
+			if selected_total_price+ele.total_price >= 100 && (selected_total_price+ele.total_price)%100 <= uint(diff_val) {
 				acceptable_combination = append(acceptable_combination, ele)
 			}
 		}
@@ -177,11 +188,17 @@ func get_acceptable_combination(combinations [][]Combination) []Combination {
 func write_data(writer fyne.URIWriteCloser, combination_list []Combination) {
 	for _, com := range combination_list {
 		var info string = "組合:\n"
+		var selected_total_price uint = 0
+		for _, ele := range wishitems_with_selected {
+			info += ele.name
+			selected_total_price += ele.discount_price
+			info += "\n"
+		}
 		for _, ele := range com.wishitems_index {
 			info += wishitems_without_selected[ele].name
 			info += "\n"
 		}
-		info += strconv.Itoa(int(com.total_price)) + " 元"
+		info += strconv.Itoa(int(selected_total_price+com.total_price)) + " 元"
 		info += "\n\n"
 		writer.Write([]byte(info))
 	}
