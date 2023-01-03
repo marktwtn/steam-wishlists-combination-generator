@@ -25,6 +25,7 @@ type Combination struct {
 
 var wishlist_page = ""
 var wishitems []Wishitem
+var wishitems_without_selected []Wishitem
 var combinations [][]Combination
 var diff_binding binding.String = binding.NewString()
 
@@ -84,7 +85,7 @@ func main() {
 	box := container.NewBorder(up, down, nil, nil, main_box)
 	window.SetContent(box)
 
-	var check_list binding.BoolList
+	var check_list []binding.Bool
 	down.Add(widget.NewButton("從網址抓取資料", func() {
 		main_box.Remove(wishlist)
 		wishlist = widget.NewList(
@@ -99,14 +100,14 @@ func main() {
 		main_box.Add(wishlist)
 		wishlist_page = url.Text
 		wishitems = get_wishlist()
-		check_list = binding.NewBoolList()
 		main_box.Remove(wishlist)
 		for index := 0; index < len(wishitems); index++ {
-			check_list.Append(false)
+			check_list = append(check_list, binding.NewBool())
 		}
 		var new_box_for_scroll = container.NewVBox()
-		for _, ele := range wishitems {
-			new_box_for_scroll.Add(widget.NewCheck(ele.name, nil))
+		for index, ele := range wishitems {
+			var check = widget.NewCheckWithData(ele.name, check_list[index])
+			new_box_for_scroll.Add(check)
 		}
 		var scroll = container.NewVScroll(new_box_for_scroll)
 		main_box.Add(scroll)
@@ -114,10 +115,17 @@ func main() {
 	}))
 
 	down.Add(widget.NewButton("產生組合結果並存檔", func() {
-		check_list_data, _ := check_list.Get()
-		for _, ele := range check_list_data {
+		wishitems_without_selected = []Wishitem{}
+		var without_selected_index = 0
+		for index, ele := range check_list {
+			selected, _ := ele.Get()
+			if !selected {
+				wishitems_without_selected = append(wishitems_without_selected, wishitems[index])
+				wishitems_without_selected[without_selected_index].index = uint(without_selected_index)
+				without_selected_index++
+			}
 		}
-		combinations = generate_all_combination(wishitems)
+		combinations = generate_all_combination(wishitems_without_selected)
 		acceptable_combination_list = get_acceptable_combination(combinations)
 		file_save.Show()
 	}))
@@ -170,7 +178,7 @@ func write_data(writer fyne.URIWriteCloser, combination_list []Combination) {
 	for _, com := range combination_list {
 		var info string = "組合:\n"
 		for _, ele := range com.wishitems_index {
-			info += wishitems[ele].name
+			info += wishitems_without_selected[ele].name
 			info += "\n"
 		}
 		info += strconv.Itoa(int(com.total_price)) + " 元"
