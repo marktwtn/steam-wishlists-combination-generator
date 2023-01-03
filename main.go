@@ -84,47 +84,46 @@ func main() {
 	box := container.NewBorder(up, down, nil, nil, main_box)
 	window.SetContent(box)
 
-	go func() {
-		down.Add(widget.NewButton("從網址抓取資料", func() {
-			main_box.Remove(wishlist)
-			wishlist = widget.NewList(
-				func() int {
-					return 1
-				},
-				func() fyne.CanvasObject {
-					return widget.NewLabel("抓取資料中......")
-				},
-				func(index widget.ListItemID, obj fyne.CanvasObject) {
-				})
-			main_box.Add(wishlist)
-			wishlist_page = url.Text
-			wishitems = get_wishlist()
-			main_box.Remove(wishlist)
-			wishlist = widget.NewList(
-				func() int {
-					return len(wishitems)
-				},
-				func() fyne.CanvasObject {
-					label := widget.NewCheck("Default", nil)
-					return label
-				},
-				func(index widget.ListItemID, obj fyne.CanvasObject) {
-					obj.(*widget.Check).Text = wishitems[index].name
-					obj.(*widget.Check).Refresh()
-				})
-			main_box.Add(wishlist)
-			window.SetContent(box)
-		}))
+	var check_list binding.BoolList
+	down.Add(widget.NewButton("從網址抓取資料", func() {
+		main_box.Remove(wishlist)
+		wishlist = widget.NewList(
+			func() int {
+				return 1
+			},
+			func() fyne.CanvasObject {
+				return widget.NewLabel("抓取資料中......")
+			},
+			func(index widget.ListItemID, obj fyne.CanvasObject) {
+			})
+		main_box.Add(wishlist)
+		wishlist_page = url.Text
+		wishitems = get_wishlist()
+		check_list = binding.NewBoolList()
+		main_box.Remove(wishlist)
+		for index := 0; index < len(wishitems); index++ {
+			check_list.Append(false)
+		}
+		var new_box_for_scroll = container.NewVBox()
+		for _, ele := range wishitems {
+			new_box_for_scroll.Add(widget.NewCheck(ele.name, nil))
+		}
+		var scroll = container.NewVScroll(new_box_for_scroll)
+		main_box.Add(scroll)
+		window.SetContent(box)
+	}))
 
-		down.Add(widget.NewButton("產生組合結果並存檔", func() {
-			combinations = generate_all_combination(wishitems)
-			acceptable_combination_list = get_acceptable_combination(combinations)
-			file_save.Show()
-		}))
+	down.Add(widget.NewButton("產生組合結果並存檔", func() {
+		check_list_data, _ := check_list.Get()
+		for _, ele := range check_list_data {
+		}
+		combinations = generate_all_combination(wishitems)
+		acceptable_combination_list = get_acceptable_combination(combinations)
+		file_save.Show()
+	}))
 
-		down.Add(widget.NewLabel(
-			"注意: 請確保願望清單的網址正確，或是願望清單有被設定成公開(即無痕視窗也可以觀看)，以及有安裝 google chrome 瀏覽器，否則程式會卡住/閃退"))
-	}()
+	down.Add(widget.NewLabel(
+		"注意: 請確保願望清單的網址正確，或是願望清單有被設定成公開(即無痕視窗也可以觀看)，以及有安裝 google chrome 瀏覽器，否則程式會卡住/閃退"))
 	window.ShowAndRun()
 }
 
