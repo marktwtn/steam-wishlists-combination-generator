@@ -30,16 +30,6 @@ var diff_binding binding.String = binding.NewString()
 
 // GUI
 var filtered_result *fyne.Container
-var wishlist *widget.List = widget.NewList(
-	func() int {
-		return 1
-	},
-	func() fyne.CanvasObject {
-		return widget.NewLabel("目前暫無資料")
-	},
-	func(index widget.ListItemID, obj fyne.CanvasObject) {
-		obj.(*widget.Label).SetText("目前暫無資料")
-	})
 
 func main() {
 	new_app := app.New()
@@ -58,6 +48,15 @@ func main() {
 		window)
 	file_save.SetFileName("steam願望清單組合")
 
+	var wishlist *widget.List = widget.NewList(
+		func() int {
+			return 1
+		},
+		func() fyne.CanvasObject {
+			return widget.NewLabel("無願望清單資料")
+		},
+		func(index widget.ListItemID, obj fyne.CanvasObject) {
+		})
 	main_box.Add(wishlist)
 	var up = container.NewVBox()
 	var url = widget.NewEntry()
@@ -87,19 +86,31 @@ func main() {
 
 	go func() {
 		down.Add(widget.NewButton("從網址抓取資料", func() {
-			wishlist_page = url.Text
 			main_box.Remove(wishlist)
+			wishlist = widget.NewList(
+				func() int {
+					return 1
+				},
+				func() fyne.CanvasObject {
+					return widget.NewLabel("抓取資料中......")
+				},
+				func(index widget.ListItemID, obj fyne.CanvasObject) {
+				})
+			main_box.Add(wishlist)
+			wishlist_page = url.Text
 			wishitems = get_wishlist()
+			main_box.Remove(wishlist)
 			wishlist = widget.NewList(
 				func() int {
 					return len(wishitems)
 				},
 				func() fyne.CanvasObject {
-					label := widget.NewLabel("Default")
+					label := widget.NewCheck("Default", nil)
 					return label
 				},
 				func(index widget.ListItemID, obj fyne.CanvasObject) {
-					obj.(*widget.Label).SetText(wishitems[index].name)
+					obj.(*widget.Check).Text = wishitems[index].name
+					obj.(*widget.Check).Refresh()
 				})
 			main_box.Add(wishlist)
 			window.SetContent(box)
