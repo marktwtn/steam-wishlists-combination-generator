@@ -50,16 +50,8 @@ func main() {
 		window)
 	file_save.SetFileName("steam願望清單組合")
 
-	var wishlist *widget.List = widget.NewList(
-		func() int {
-			return 1
-		},
-		func() fyne.CanvasObject {
-			return widget.NewLabel("無願望清單資料")
-		},
-		func(index widget.ListItemID, obj fyne.CanvasObject) {
-		})
-	main_box.Add(wishlist)
+	var status = widget.NewLabel("無願望清單")
+	main_box.Add(status)
 	var up = container.NewVBox()
 	var url = widget.NewEntry()
 	var up_0 = widget.NewForm(widget.NewFormItem("願望清單網址", url))
@@ -88,20 +80,12 @@ func main() {
 
 	var check_list []binding.Bool
 	down.Add(widget.NewButton("從網址抓取資料", func() {
-		main_box.Remove(wishlist)
-		wishlist = widget.NewList(
-			func() int {
-				return 1
-			},
-			func() fyne.CanvasObject {
-				return widget.NewLabel("抓取資料中......")
-			},
-			func(index widget.ListItemID, obj fyne.CanvasObject) {
-			})
-		main_box.Add(wishlist)
+		main_box.RemoveAll()
+		status = widget.NewLabel("抓取資料中......")
+		main_box.Add(status)
 		wishlist_page = url.Text
 		wishitems = get_wishlist()
-		main_box.Remove(wishlist)
+		main_box.RemoveAll()
 		for index := 0; index < len(wishitems); index++ {
 			check_list = append(check_list, binding.NewBool())
 		}
