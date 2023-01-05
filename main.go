@@ -14,9 +14,10 @@ import (
 const SCROLL_DOWN_UNIT int = 2000
 
 type Wishitem struct {
-	index          uint
-	name           string
-	discount_price uint
+	index            uint
+	name             string
+	discount_price   uint
+	discount_percent uint
 }
 type Combination struct {
 	total_price     uint
@@ -91,7 +92,7 @@ func main() {
 		}
 		var new_box_for_scroll = container.NewVBox()
 		for index, ele := range wishitems {
-			var wishitems_info = ele.name + "    " + get_price_string(ele)
+			var wishitems_info = ele.name + "    " + get_price_string(ele) + "    " + get_discount_string(ele)
 			var check = widget.NewCheckWithData(wishitems_info, check_list[index])
 			new_box_for_scroll.Add(check)
 		}
@@ -180,6 +181,8 @@ func write_data(writer fyne.URIWriteCloser, combination_list []Combination) {
 			info += ele.name
 			info += "    "
 			info += get_price_string(ele)
+			info += "    "
+			info += get_discount_string(ele)
 			selected_total_price += ele.discount_price
 			info += "\n"
 		}
@@ -187,6 +190,8 @@ func write_data(writer fyne.URIWriteCloser, combination_list []Combination) {
 			info += wishitems_without_selected[ele].name
 			info += "    "
 			info += get_price_string(wishitems_without_selected[ele])
+			info += "    "
+			info += get_discount_string(wishitems_without_selected[ele])
 			info += "\n"
 		}
 		info += strconv.Itoa(int(selected_total_price+com.total_price)) + "元"
@@ -197,4 +202,11 @@ func write_data(writer fyne.URIWriteCloser, combination_list []Combination) {
 
 func get_price_string(wishitem Wishitem) string {
 	return strconv.Itoa(int(wishitem.discount_price)) + "元"
+}
+
+func get_discount_string(wishitem Wishitem) string {
+	if wishitem.discount_percent == 100 {
+		return ""
+	}
+	return "(" + strconv.FormatFloat(float64(wishitem.discount_percent)/10, 'f', -1, 64) + "折)"
 }

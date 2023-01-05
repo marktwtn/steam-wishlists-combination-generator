@@ -61,7 +61,8 @@ func get_wishlist() []Wishitem {
 					if _, existed := wishlist[name]; !existed {
 						if is_released(node) {
 							price := get_final_price(node)
-							wishlist[name] = Wishitem{0, name, price}
+							discount_percent := get_discount_percent(node)
+							wishlist[name] = Wishitem{0, name, price, discount_percent}
 						}
 					}
 				}
@@ -124,11 +125,11 @@ func get_final_price(node *cdp.Node) uint {
 		var price_node *cdp.Node
 		var price int = 0
 		var err error
-		if is_attribute_existed(get_purchase_container_node(node).Children[0].Children[0], "discount_block") {
-			if is_attribute_existed(get_purchase_container_node(node).Children[0].Children[0], "no_discount") {
-				price_node = get_purchase_container_node(node).Children[0].Children[0].Children[0].Children[0].Children[0]
-			} else {
+		if is_attribute_existed(get_discount_block(node), "discount_block") {
+			if is_discounted(node) {
 				price_node = get_purchase_container_node(node).Children[0].Children[0].Children[1].Children[1].Children[0]
+			} else {
+				price_node = get_purchase_container_node(node).Children[0].Children[0].Children[0].Children[0].Children[0]
 			}
 			price, err = strconv.Atoi(remove_nt_and_dollar_sign(remove_thousand_comma(price_node.NodeValue)))
 		}
@@ -141,8 +142,44 @@ func get_final_price(node *cdp.Node) uint {
 	return 0
 }
 
+func get_discount_percent(node *cdp.Node) uint {
+	if is_released(node) {
+		var discount_node *cdp.Node
+		var discount int = 0
+		var err error
+		if is_attribute_existed(get_discount_block(node), "discount_block") {
+			if is_discounted(node) {
+				discount_node = get_discount_block(node).Children[0].Children[0]
+				discount, err = strconv.Atoi(remove_neg_and_percent_sign(discount_node.NodeValue))
+				if err == nil {
+					return 100 - uint(discount)
+				}
+			}
+		}
+	}
+	return 100
+}
+
+func is_discounted(node *cdp.Node) bool {
+	if get_discount_block(node) != nil {
+		if is_attribute_existed(get_discount_block(node), "no_discount") {
+			return false
+		} else {
+			return true
+		}
+	}
+	return false
+}
+
 func is_released(node *cdp.Node) bool {
 	return is_attribute_existed(get_purchase_container_node(node).Children[0], "purchase_area")
+}
+
+func get_discount_block(node *cdp.Node) *cdp.Node {
+	if is_released(node) {
+		return get_purchase_container_node(node).Children[0].Children[0]
+	}
+	return nil
 }
 
 func get_purchase_container_node(node *cdp.Node) *cdp.Node {
@@ -163,6 +200,10 @@ func is_attribute_existed(node *cdp.Node, attr string) bool {
 
 func remove_nt_and_dollar_sign(input string) string {
 	return strings.Trim(input, "NT$ ")
+}
+
+func remove_neg_and_percent_sign(input string) string {
+	return strings.Trim(input, "-%")
 }
 
 func remove_thousand_comma(input string) string {
