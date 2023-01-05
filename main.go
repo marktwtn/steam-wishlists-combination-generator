@@ -153,12 +153,14 @@ func generate_all_combination(wishitems []Wishitem) [][]Combination {
 		result[1] = append(result[1], combination)
 	}
 	// Total items in combination > 1
-	for index := 2; index <= len(wishitems); index++ {
+	for index := 2; index <= 5; index++ {
 		for _, prev_combination := range result[index-1] {
 			var last_item_index uint = prev_combination.wishitems_index[len(prev_combination.wishitems_index)-1]
 			if last_item_index != uint(len(wishitems))-1 {
 				for _, new_ele := range wishitems[last_item_index+1:] {
-					var new_combination Combination = Combination{prev_combination.total_price + new_ele.discount_price, append(prev_combination.wishitems_index, new_ele.index)}
+					new_wishitems_index := make([]uint, len(prev_combination.wishitems_index))
+					copy(new_wishitems_index, prev_combination.wishitems_index)
+					var new_combination Combination = Combination{prev_combination.total_price + new_ele.discount_price, append(new_wishitems_index, new_ele.index)}
 					result[index] = append(result[index], new_combination)
 				}
 			}
