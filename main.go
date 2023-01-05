@@ -91,7 +91,8 @@ func main() {
 		}
 		var new_box_for_scroll = container.NewVBox()
 		for index, ele := range wishitems {
-			var check = widget.NewCheckWithData(ele.name, check_list[index])
+			var wishitems_info = ele.name + "    " + get_price_string(ele)
+			var check = widget.NewCheckWithData(wishitems_info, check_list[index])
 			new_box_for_scroll.Add(check)
 		}
 		var scroll = container.NewVScroll(new_box_for_scroll)
@@ -177,15 +178,23 @@ func write_data(writer fyne.URIWriteCloser, combination_list []Combination) {
 		var selected_total_price uint = 0
 		for _, ele := range wishitems_with_selected {
 			info += ele.name
+			info += "    "
+			info += get_price_string(ele)
 			selected_total_price += ele.discount_price
 			info += "\n"
 		}
 		for _, ele := range com.wishitems_index {
 			info += wishitems_without_selected[ele].name
+			info += "    "
+			info += get_price_string(wishitems_without_selected[ele])
 			info += "\n"
 		}
-		info += strconv.Itoa(int(selected_total_price+com.total_price)) + " 元"
+		info += strconv.Itoa(int(selected_total_price+com.total_price)) + "元"
 		info += "\n\n"
 		writer.Write([]byte(info))
 	}
+}
+
+func get_price_string(wishitem Wishitem) string {
+	return strconv.Itoa(int(wishitem.discount_price)) + "元"
 }
