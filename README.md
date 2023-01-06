@@ -1,6 +1,8 @@
 # steam-wishlists-combination-generator
 產生總價格適合信用卡滿百回饋的Steam願望清單組合
 
+![CI status](https://github.com/marktwtn/steam-wishlists-combination-generator/actions/workflows/ci.yml/badge.svg?branch=main)
+
 ## 前置準備
 - 安裝 google chrome 瀏覽器
 - 願望清單設置成公開
