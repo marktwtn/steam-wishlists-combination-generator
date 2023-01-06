@@ -112,7 +112,7 @@ func detect_webpage_height(ctx context.Context) uint {
 }
 
 func get_title(node *cdp.Node) string {
-	if is_attribute_existed(node, "content") {
+	if is_wishitem_node(node) {
 		title_node := node.Children[0].Children[0]
 		title := strings.TrimSpace(title_node.NodeValue)
 		return title
@@ -125,14 +125,12 @@ func get_final_price(node *cdp.Node) uint {
 		var price_node *cdp.Node
 		var price int = 0
 		var err error
-		if is_attribute_existed(get_discount_block(node), "discount_block") {
-			if is_discounted(node) {
-				price_node = get_purchase_container_node(node).Children[0].Children[0].Children[1].Children[1].Children[0]
-			} else {
-				price_node = get_purchase_container_node(node).Children[0].Children[0].Children[0].Children[0].Children[0]
-			}
-			price, err = strconv.Atoi(remove_nt_and_dollar_sign(remove_thousand_comma(price_node.NodeValue)))
+		if is_discounted(node) {
+			price_node = get_discount_block_node(node).Children[1].Children[1].Children[0]
+		} else {
+			price_node = get_discount_block_node(node).Children[0].Children[0].Children[0]
 		}
+		price, err = strconv.Atoi(remove_nt_and_dollar_sign(remove_thousand_comma(price_node.NodeValue)))
 		if err == nil {
 			return uint(price)
 		} else {
@@ -147,13 +145,11 @@ func get_discount_percent(node *cdp.Node) uint {
 		var discount_node *cdp.Node
 		var discount int = 0
 		var err error
-		if is_attribute_existed(get_discount_block(node), "discount_block") {
-			if is_discounted(node) {
-				discount_node = get_discount_block(node).Children[0].Children[0]
-				discount, err = strconv.Atoi(remove_neg_and_percent_sign(discount_node.NodeValue))
-				if err == nil {
-					return 100 - uint(discount)
-				}
+		if is_discounted(node) {
+			discount_node = get_discount_block_node(node).Children[0].Children[0]
+			discount, err = strconv.Atoi(remove_neg_and_percent_sign(discount_node.NodeValue))
+			if err == nil {
+				return 100 - uint(discount)
 			}
 		}
 	}
@@ -161,32 +157,37 @@ func get_discount_percent(node *cdp.Node) uint {
 }
 
 func is_discounted(node *cdp.Node) bool {
-	if get_discount_block(node) != nil {
-		if is_attribute_existed(get_discount_block(node), "no_discount") {
-			return false
-		} else {
-			return true
-		}
+	if is_attribute_existed(get_discount_block_node(node), "no_discount") {
+		return false
+	} else {
+		return true
 	}
-	return false
 }
 
-func is_released(node *cdp.Node) bool {
-	return is_attribute_existed(get_purchase_container_node(node).Children[0], "purchase_area")
-}
-
-func get_discount_block(node *cdp.Node) *cdp.Node {
+func get_discount_block_node(node *cdp.Node) *cdp.Node {
 	if is_released(node) {
 		return get_purchase_container_node(node).Children[0].Children[0]
 	}
 	return nil
 }
 
+func is_released(node *cdp.Node) bool {
+	return is_attribute_existed(get_purchase_container_node(node).Children[0], "purchase_area")
+}
+
 func get_purchase_container_node(node *cdp.Node) *cdp.Node {
-	if is_attribute_existed(node, "content") {
+	if is_wishitem_node(node) {
 		return node.Children[1].Children[1]
 	}
 	return nil
+}
+
+func is_wishitem_node(node *cdp.Node) bool {
+	if is_attribute_existed(node, "content") {
+		return true
+	}
+	log.Fatalf("The input node is not the required wishitem node.")
+	return false
 }
 
 func is_attribute_existed(node *cdp.Node, attr string) bool {
