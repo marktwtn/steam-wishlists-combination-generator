@@ -39,7 +39,6 @@ func main() {
 	new_app.Settings().SetTheme(&new_theme{})
 	window := new_app.NewWindow("Steam願望清單最佳組合程式")
 	window.SetMaster()
-	main_box := container.NewGridWithColumns(1)
 
 	var acceptable_combination_list []Combination
 	var file_save = dialog.NewFileSave(
@@ -52,7 +51,7 @@ func main() {
 	file_save.SetFileName("steam願望清單組合")
 
 	var status = widget.NewLabel("無願望清單")
-	main_box.Add(status)
+	var main_box = container.NewBorder(widget.NewSeparator(), widget.NewSeparator(), nil, nil, status)
 	var up = container.NewVBox()
 	var url = widget.NewEntry()
 	var up_0 = widget.NewForm(widget.NewFormItem("願望清單網址", url))
@@ -91,7 +90,9 @@ func main() {
 	down.Add(widget.NewButton("從網址抓取資料", func() {
 		main_box.RemoveAll()
 		status = widget.NewLabel("抓取資料中......")
-		main_box.Add(status)
+		main_box = container.NewBorder(widget.NewSeparator(), widget.NewSeparator(), nil, nil, status)
+		box = container.NewBorder(up, down, nil, nil, main_box)
+		window.SetContent(box)
 		wishlist_page = url.Text
 		wishitems = get_wishlist()
 		main_box.RemoveAll()
@@ -106,7 +107,8 @@ func main() {
 			new_box_for_scroll.Add(check)
 		}
 		var scroll = container.NewVScroll(new_box_for_scroll)
-		main_box.Add(container.NewBorder(status, nil, nil, nil, scroll))
+		main_box = container.NewBorder(widget.NewSeparator(), widget.NewSeparator(), nil, nil, container.NewBorder(status, nil, nil, nil, scroll))
+		box = container.NewBorder(up, down, nil, nil, main_box)
 		window.SetContent(box)
 	}))
 
