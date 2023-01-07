@@ -60,6 +60,11 @@ func main() {
 	progress.Max = float64(scroll_times_max)
 	var scroll_times_binding = binding.NewFloat()
 	progress.Bind(scroll_times_binding)
+	var unselected_max int
+	var unselected_limit = widget.NewSelect([]string{"0", "1", "2", "3", "4", "5"}, func(data string) {
+		unselected_max, _ = strconv.Atoi(data)
+	})
+	unselected_limit.SetSelected("5")
 	go func() {
 		for {
 			scroll_times_binding.Set(float64(<-scroll_channel))
@@ -72,9 +77,12 @@ func main() {
 	}()
 	var up_1 = widget.NewForm(widget.NewFormItem("抓取願望清單進度", progress))
 	var up_2 = widget.NewForm(widget.NewFormItem("金額與信用卡折扣的可容忍差額", widget.NewEntryWithData(diff_binding)))
+	var up_3 = widget.NewForm(widget.NewFormItem("搭配非勾選的遊戲上限數量", unselected_limit))
 	up.Add(up_0)
 	up.Add(up_1)
 	up.Add(up_2)
+	up.Add(up_3)
+	up.Add(widget.NewForm(widget.NewFormItem("願望清單越多，「搭配非勾選的遊戲上限數量」數值設定越高，產出組合的時間越長", widget.NewLabel(""))))
 	var down = container.NewHBox()
 	box := container.NewBorder(up, down, nil, nil, main_box)
 	window.SetContent(box)
@@ -119,7 +127,16 @@ func main() {
 				without_selected_index++
 			}
 		}
-		combinations = generate_all_combination(wishitems_without_selected)
+		var limit int
+		if unselected_max < len(wishitems_without_selected) {
+			limit = unselected_max
+		} else {
+			limit = len(wishitems_without_selected)
+		}
+		if limit > 5 {
+			limit = 5
+		}
+		combinations = generate_all_combination(limit, wishitems_without_selected)
 		acceptable_combination_list = get_acceptable_combination(combinations)
 		file_save.Show()
 	}))
@@ -129,7 +146,7 @@ func main() {
 	window.ShowAndRun()
 }
 
-func generate_all_combination(wishitems []Wishitem) [][]Combination {
+func generate_all_combination(unselected_count int, wishitems []Wishitem) [][]Combination {
 	var result [][]Combination
 	for index := 0; index <= len(wishitems); index++ {
 		result = append(result, []Combination{})
@@ -140,7 +157,7 @@ func generate_all_combination(wishitems []Wishitem) [][]Combination {
 		result[1] = append(result[1], combination)
 	}
 	// Total items in combination > 1
-	for index := 2; index <= 5; index++ {
+	for index := 2; index <= unselected_count; index++ {
 		for _, prev_combination := range result[index-1] {
 			var last_item_index uint = prev_combination.wishitems_index[len(prev_combination.wishitems_index)-1]
 			if last_item_index != uint(len(wishitems))-1 {
