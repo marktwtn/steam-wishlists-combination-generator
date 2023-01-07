@@ -87,6 +87,7 @@ func main() {
 		wishlist_page = url.Text
 		wishitems = get_wishlist()
 		main_box.RemoveAll()
+		status = widget.NewLabel("可勾選必列入組合結果的遊戲")
 		for index := 0; index < len(wishitems); index++ {
 			check_list = append(check_list, binding.NewBool())
 		}
@@ -97,7 +98,7 @@ func main() {
 			new_box_for_scroll.Add(check)
 		}
 		var scroll = container.NewVScroll(new_box_for_scroll)
-		main_box.Add(scroll)
+		main_box.Add(container.NewBorder(status, nil, nil, nil, scroll))
 		window.SetContent(box)
 	}))
 
