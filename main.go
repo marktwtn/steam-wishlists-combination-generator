@@ -30,9 +30,11 @@ var wishitems_with_selected []Wishitem
 var wishitems_without_selected []Wishitem
 var combinations [][]Combination
 var diff_binding binding.String = binding.NewString()
+var combination_channel = make(chan int, 100)
 
 // GUI
 var filtered_result *fyne.Container
+var combination_progress *widget.ProgressBar
 
 func main() {
 	new_app := app.New()
@@ -87,6 +89,14 @@ func main() {
 	window.SetContent(box)
 
 	var check_list []binding.Bool
+	var combination_count_binding = binding.NewFloat()
+	combination_progress = widget.NewProgressBar()
+	go func() {
+		for {
+			combination_count_binding.Set(float64(<-combination_channel))
+		}
+	}()
+	combination_progress.Bind(combination_count_binding)
 	down.Add(widget.NewButton("從網址抓取資料", func() {
 		main_box.RemoveAll()
 		status = widget.NewLabel("抓取資料中......")
@@ -107,7 +117,7 @@ func main() {
 			new_box_for_scroll.Add(check)
 		}
 		var scroll = container.NewVScroll(new_box_for_scroll)
-		main_box = container.NewBorder(widget.NewSeparator(), widget.NewSeparator(), nil, nil, container.NewBorder(status, nil, nil, nil, scroll))
+		main_box = container.NewBorder(widget.NewSeparator(), widget.NewSeparator(), nil, nil, container.NewBorder(container.NewVBox(status, container.NewGridWithColumns(1, widget.NewLabel("組合結果處理進度: "), combination_progress)), nil, nil, nil, scroll))
 		box = container.NewBorder(up, down, nil, nil, main_box)
 		window.SetContent(box)
 	}))
@@ -138,6 +148,11 @@ func main() {
 		if limit > 5 {
 			limit = 5
 		}
+		var combination_max = 0
+		for index := 1; index <= limit; index++ {
+			combination_max += get_combination_count(index, len(wishitems_without_selected))
+		}
+		combination_progress.Max = float64(combination_max)
 		combinations = generate_all_combination(limit, wishitems_without_selected)
 		acceptable_combination_list = get_acceptable_combination(combinations)
 		file_save.Show()
@@ -150,6 +165,7 @@ func main() {
 
 func generate_all_combination(unselected_count int, wishitems []Wishitem) [][]Combination {
 	var result [][]Combination
+	var combination_count = 0
 	for index := 0; index <= len(wishitems); index++ {
 		result = append(result, []Combination{})
 	}
@@ -157,6 +173,7 @@ func generate_all_combination(unselected_count int, wishitems []Wishitem) [][]Co
 	for _, ele := range wishitems {
 		var combination Combination = Combination{ele.discount_price, []uint{ele.index}}
 		result[1] = append(result[1], combination)
+		combination_count++
 	}
 	// Total items in combination > 1
 	for index := 2; index <= unselected_count; index++ {
@@ -168,9 +185,19 @@ func generate_all_combination(unselected_count int, wishitems []Wishitem) [][]Co
 					copy(new_wishitems_index, prev_combination.wishitems_index)
 					var new_combination Combination = Combination{prev_combination.total_price + new_ele.discount_price, append(new_wishitems_index, new_ele.index)}
 					result[index] = append(result[index], new_combination)
+					combination_count++
+					combination_channel <- combination_count
 				}
 			}
 		}
+	}
+	return result
+}
+
+func get_combination_count(selected int, total int) int {
+	var result = 1
+	for index := 1; index <= selected; index++ {
+		result = result * (total - index + 1) / index
 	}
 	return result
 }
