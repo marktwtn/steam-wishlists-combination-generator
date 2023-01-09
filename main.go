@@ -11,8 +11,6 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-const SCROLL_DOWN_UNIT int = 2000
-
 type Wishitem struct {
 	index            uint
 	name             string
@@ -24,6 +22,9 @@ type Combination struct {
 	wishitems_index []uint
 }
 
+const SCROLL_DOWN_UNIT int = 2000
+const UNSELECTED_MAX int = 5
+
 var wishlist_page = ""
 var wishitems []Wishitem
 var wishitems_with_selected []Wishitem
@@ -33,7 +34,6 @@ var diff_binding binding.String = binding.NewString()
 var combination_channel = make(chan int, 100)
 
 // GUI
-var filtered_result *fyne.Container
 var combination_progress *widget.ProgressBar
 
 func main() {
@@ -42,30 +42,14 @@ func main() {
 	window := new_app.NewWindow("Steam願望清單最佳組合程式")
 	window.SetMaster()
 
-	var acceptable_combination_list []Combination
-	var file_save = dialog.NewFileSave(
-		func(writer fyne.URIWriteCloser, err error) {
-			if writer != nil {
-				write_data(writer, acceptable_combination_list)
-			}
-		},
-		window)
-	file_save.SetFileName("steam願望清單組合")
-
-	var status = widget.NewLabel("無願望清單")
-	var main_box = container.NewBorder(widget.NewSeparator(), widget.NewSeparator(), nil, nil, status)
 	var up = container.NewVBox()
 	var url = widget.NewEntry()
 	var up_0 = widget.NewForm(widget.NewFormItem("願望清單網址", url))
+	up.Add(up_0)
 	var progress = widget.NewProgressBar()
 	progress.Max = float64(scroll_times_max)
 	var scroll_times_binding = binding.NewFloat()
 	progress.Bind(scroll_times_binding)
-	var unselected_max int
-	var unselected_limit = widget.NewSelect([]string{"0", "1", "2", "3", "4", "5"}, func(data string) {
-		unselected_max, _ = strconv.Atoi(data)
-	})
-	unselected_limit.SetSelected("5")
 	go func() {
 		for {
 			scroll_times_binding.Set(float64(<-scroll_channel))
@@ -77,16 +61,26 @@ func main() {
 		}
 	}()
 	var up_1 = widget.NewForm(widget.NewFormItem("抓取願望清單進度", progress))
-	var up_2 = widget.NewForm(widget.NewFormItem("金額與信用卡折扣的可容忍差額", widget.NewEntryWithData(diff_binding)))
-	var up_3 = widget.NewForm(widget.NewFormItem("搭配非勾選的遊戲上限數量", unselected_limit))
-	up.Add(up_0)
 	up.Add(up_1)
+	var up_2 = widget.NewForm(widget.NewFormItem("金額與信用卡折扣的可容忍差額", widget.NewEntryWithData(diff_binding)))
 	up.Add(up_2)
+	var unselected_max int
+	var option = []string{}
+	for index := 0; index <= UNSELECTED_MAX; index++ {
+		option = append(option, strconv.Itoa(index))
+	}
+	var unselected_limit = widget.NewSelect(option, func(data string) {
+		unselected_max, _ = strconv.Atoi(data)
+	})
+	unselected_limit.SetSelected(option[len(option)-1])
+	var up_3 = widget.NewForm(widget.NewFormItem("搭配非勾選的遊戲上限數量", unselected_limit))
 	up.Add(up_3)
-	up.Add(widget.NewForm(widget.NewFormItem("願望清單越多，「搭配非勾選的遊戲上限數量」數值設定越高，產出組合的時間越長", widget.NewLabel(""))))
+	var up_4 = widget.NewForm(widget.NewFormItem("願望清單越多，「搭配非勾選的遊戲上限數量」數值設定越高，產出組合的時間越長", widget.NewLabel("")))
+	up.Add(up_4)
 	var down = container.NewHBox()
-	box := container.NewBorder(up, down, nil, nil, main_box)
-	window.SetContent(box)
+	var status = widget.NewLabel("無願望清單")
+	var main_box = container.NewBorder(widget.NewSeparator(), widget.NewSeparator(), nil, nil, status)
+	var box = container.NewBorder(up, down, nil, nil, main_box)
 
 	var check_list []binding.Bool
 	var combination_count_binding = binding.NewFloat()
@@ -111,9 +105,9 @@ func main() {
 			check_list = append(check_list, binding.NewBool())
 		}
 		var new_box_for_scroll = container.NewVBox()
-		for index, ele := range wishitems {
-			var wishitems_info = ele.name + "    " + get_price_string(ele) + "    " + get_discount_string(ele)
-			var check = widget.NewCheckWithData(wishitems_info, check_list[index])
+		for index, wishitem := range wishitems {
+			var wishitem_info = wishitem.name + "    " + get_price_string(wishitem) + "    " + get_discount_string(wishitem)
+			var check = widget.NewCheckWithData(wishitem_info, check_list[index])
 			new_box_for_scroll.Add(check)
 		}
 		var scroll = container.NewVScroll(new_box_for_scroll)
@@ -121,7 +115,15 @@ func main() {
 		box = container.NewBorder(up, down, nil, nil, main_box)
 		window.SetContent(box)
 	}))
-
+	var acceptable_combination_list []Combination
+	var file_save = dialog.NewFileSave(
+		func(writer fyne.URIWriteCloser, err error) {
+			if writer != nil {
+				write_data(writer, acceptable_combination_list)
+			}
+		},
+		window)
+	file_save.SetFileName("steam願望清單組合")
 	down.Add(widget.NewButton("產生組合結果並存檔", func() {
 		wishitems_with_selected = []Wishitem{}
 		wishitems_without_selected = []Wishitem{}
@@ -157,9 +159,10 @@ func main() {
 		acceptable_combination_list = get_acceptable_combination(combinations)
 		file_save.Show()
 	}))
-
 	down.Add(widget.NewLabel(
 		"注意: 請確保願望清單的網址正確，或是願望清單有被設定成公開(即無痕視窗也可以觀看)，以及有安裝 google chrome 瀏覽器，否則程式會卡住/閃退"))
+
+	window.SetContent(box)
 	window.ShowAndRun()
 }
 
@@ -170,8 +173,8 @@ func generate_all_combination(unselected_count int, wishitems []Wishitem) [][]Co
 		result = append(result, []Combination{})
 	}
 	// Total item in combination = 1
-	for _, ele := range wishitems {
-		var combination Combination = Combination{ele.discount_price, []uint{ele.index}}
+	for _, wishitem := range wishitems {
+		var combination Combination = Combination{wishitem.discount_price, []uint{wishitem.index}}
 		result[1] = append(result[1], combination)
 		combination_count++
 	}
@@ -180,10 +183,10 @@ func generate_all_combination(unselected_count int, wishitems []Wishitem) [][]Co
 		for _, prev_combination := range result[index-1] {
 			var last_item_index uint = prev_combination.wishitems_index[len(prev_combination.wishitems_index)-1]
 			if last_item_index != uint(len(wishitems))-1 {
-				for _, new_ele := range wishitems[last_item_index+1:] {
+				for _, wishitem := range wishitems[last_item_index+1:] {
 					new_wishitems_index := make([]uint, len(prev_combination.wishitems_index))
 					copy(new_wishitems_index, prev_combination.wishitems_index)
-					var new_combination Combination = Combination{prev_combination.total_price + new_ele.discount_price, append(new_wishitems_index, new_ele.index)}
+					var new_combination Combination = Combination{prev_combination.total_price + wishitem.discount_price, append(new_wishitems_index, wishitem.index)}
 					result[index] = append(result[index], new_combination)
 					combination_count++
 					combination_channel <- combination_count
@@ -210,11 +213,11 @@ func get_acceptable_combination(combinations [][]Combination) []Combination {
 	var diff, _ = diff_binding.Get()
 	var diff_val, _ = strconv.Atoi(diff)
 	var selected_total_price uint = 0
-	for _, ele := range wishitems_with_selected {
-		selected_total_price += ele.discount_price
+	for _, wishitem := range wishitems_with_selected {
+		selected_total_price += wishitem.discount_price
 	}
-	for _, outer_ele := range combinations {
-		for _, ele := range outer_ele {
+	for _, combination := range combinations {
+		for _, ele := range combination {
 			if selected_total_price+ele.total_price >= 100 && (selected_total_price+ele.total_price)%100 <= uint(diff_val) {
 				acceptable_combination = append(acceptable_combination, ele)
 			}
@@ -223,28 +226,29 @@ func get_acceptable_combination(combinations [][]Combination) []Combination {
 	return acceptable_combination
 }
 
-func write_data(writer fyne.URIWriteCloser, combination_list []Combination) {
-	for _, com := range combination_list {
+func write_data(writer fyne.URIWriteCloser, combinations []Combination) {
+	for _, combination := range combinations {
 		var info string = "組合:\n"
 		var selected_total_price uint = 0
-		for _, ele := range wishitems_with_selected {
-			info += ele.name
+		for _, wishitem := range wishitems_with_selected {
+			info += wishitem.name
 			info += "    "
-			info += get_price_string(ele)
+			info += get_price_string(wishitem)
 			info += "    "
-			info += get_discount_string(ele)
-			selected_total_price += ele.discount_price
+			info += get_discount_string(wishitem)
+			selected_total_price += wishitem.discount_price
 			info += "\n"
 		}
-		for _, ele := range com.wishitems_index {
-			info += wishitems_without_selected[ele].name
+		for _, index := range combination.wishitems_index {
+			var wishitem = wishitems_without_selected[index]
+			info += wishitem.name
 			info += "    "
-			info += get_price_string(wishitems_without_selected[ele])
+			info += get_price_string(wishitem)
 			info += "    "
-			info += get_discount_string(wishitems_without_selected[ele])
+			info += get_discount_string(wishitem)
 			info += "\n"
 		}
-		info += strconv.Itoa(int(selected_total_price+com.total_price)) + "元"
+		info += strconv.Itoa(int(selected_total_price+combination.total_price)) + "元"
 		info += "\n\n"
 		writer.Write([]byte(info))
 	}
