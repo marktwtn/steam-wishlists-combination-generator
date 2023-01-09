@@ -195,6 +195,9 @@ func generate_all_combination(unselected_count int, wishitems []Wishitem) [][]Co
 }
 
 func get_combination_count(selected int, total int) int {
+	if selected <= 0 || total <= 0 {
+		return 0
+	}
 	var result = 1
 	for index := 1; index <= selected; index++ {
 		result = result * (total - index + 1) / index
