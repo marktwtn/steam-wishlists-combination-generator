@@ -206,7 +206,7 @@ func get_combination_count(selected int, total int) int {
 	return result
 }
 
-func get_acceptable_combination(combinations [][]Combination) []Combination {
+func get_acceptable_combination(combinations_list [][]Combination) []Combination {
 	var acceptable_combination []Combination
 	var diff, _ = diff_binding.Get()
 	var diff_val, _ = strconv.Atoi(diff)
@@ -214,10 +214,11 @@ func get_acceptable_combination(combinations [][]Combination) []Combination {
 	for _, wishitem := range wishitems_with_selected {
 		selected_total_price += wishitem.discount_price
 	}
-	for _, combination := range combinations {
-		for _, ele := range combination {
-			if selected_total_price+ele.total_price >= 100 && (selected_total_price+ele.total_price)%100 <= uint(diff_val) {
-				acceptable_combination = append(acceptable_combination, ele)
+	for _, combinations := range combinations_list {
+		for _, combination := range combinations {
+			var total = selected_total_price + combination.total_price
+			if total >= 100 && total%100 <= uint(diff_val) {
+				acceptable_combination = append(acceptable_combination, combination)
 			}
 		}
 	}
@@ -225,18 +226,20 @@ func get_acceptable_combination(combinations [][]Combination) []Combination {
 }
 
 func write_data(writer fyne.URIWriteCloser, combinations []Combination) {
+	var selected_info = ""
+	var selected_total_price uint = 0
+	for _, wishitem := range wishitems_with_selected {
+		selected_info += wishitem.name
+		selected_info += "    "
+		selected_info += get_price_string(wishitem)
+		selected_info += "    "
+		selected_info += get_discount_string(wishitem)
+		selected_info += "\n"
+		selected_total_price += wishitem.discount_price
+	}
 	for _, combination := range combinations {
 		var info string = "組合:\n"
-		var selected_total_price uint = 0
-		for _, wishitem := range wishitems_with_selected {
-			info += wishitem.name
-			info += "    "
-			info += get_price_string(wishitem)
-			info += "    "
-			info += get_discount_string(wishitem)
-			selected_total_price += wishitem.discount_price
-			info += "\n"
-		}
+		info += selected_info
 		for _, index := range combination.wishitems_index {
 			var wishitem = wishitems_without_selected[index]
 			info += wishitem.name
