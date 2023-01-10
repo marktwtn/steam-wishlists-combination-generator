@@ -14,11 +14,17 @@ jobs:
       with:
         go-version: 1.19
     
-    - name: Build
+    - name: Linux build
       run: |
         sudo apt update 
         sudo apt install libgl1-mesa-dev xorg-dev
         make linux
+
+    - name: Windows build (Cross compile)
+      run: |
+        sudo apt install mingw-w64
+        sudo apt install mingw-w64-x86-64-dev
+        make windows
 
     - name: Unit test
       run: make test
