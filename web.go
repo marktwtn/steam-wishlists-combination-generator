@@ -17,11 +17,11 @@ var scroll_times_max int = 1
 var scroll_channel = make(chan int, 3)
 var scroll_max_channel = make(chan int, 1)
 
-func get_wishlist() []Wishitem {
+func get_wishlist(url string) []Wishitem {
 	ctx, cancel := chromedp.NewContext(context.Background())
 	defer cancel()
 
-	height := detect_webpage_height(ctx)
+	height := detect_webpage_height(ctx, url)
 	scroll_max_channel <- int(height) + SCROLL_DOWN_UNIT
 
 	var data []*cdp.Node
@@ -78,7 +78,7 @@ func get_wishlist() []Wishitem {
 	}
 
 	err := chromedp.Run(ctx,
-		chromedp.Navigate(wishlist_page),
+		chromedp.Navigate(url),
 		tasks,
 	)
 	if err != nil {
@@ -95,10 +95,10 @@ func get_wishlist() []Wishitem {
 	return wishitems
 }
 
-func detect_webpage_height(ctx context.Context) uint {
+func detect_webpage_height(ctx context.Context, url string) uint {
 	var height uint
 	err := chromedp.Run(ctx,
-		chromedp.Navigate(wishlist_page),
+		chromedp.Navigate(url),
 		chromedp.ActionFunc(func(context.Context) error {
 			time.Sleep(5 * time.Second)
 			return nil

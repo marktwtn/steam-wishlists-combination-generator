@@ -25,7 +25,6 @@ type Combination struct {
 const SCROLL_DOWN_UNIT int = 2000
 const UNSELECTED_MAX int = 5
 
-var wishlist_page = ""
 var wishitems []Wishitem
 var wishitems_with_selected []Wishitem
 var wishitems_without_selected []Wishitem
@@ -97,8 +96,7 @@ func main() {
 		main_box = container.NewBorder(widget.NewSeparator(), widget.NewSeparator(), nil, nil, status)
 		box = container.NewBorder(up, down, nil, nil, main_box)
 		window.SetContent(box)
-		wishlist_page = url.Text
-		wishitems = get_wishlist()
+		wishitems = get_wishlist(url.Text)
 		main_box.RemoveAll()
 		status = widget.NewLabel("可勾選必列入組合結果的遊戲")
 		for index := 0; index < len(wishitems); index++ {
