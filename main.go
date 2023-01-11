@@ -46,12 +46,13 @@ func main() {
 	var up_0 = widget.NewForm(widget.NewFormItem("願望清單網址", url))
 	up.Add(up_0)
 	var progress = widget.NewProgressBar()
-	progress.Max = float64(scroll_times_max)
 	var scroll_times_binding = binding.NewFloat()
 	progress.Bind(scroll_times_binding)
+	var scroll_progress_channel = make(chan int, 10)
+	var scroll_max_channel = make(chan int, 1)
 	go func() {
 		for {
-			scroll_times_binding.Set(float64(<-scroll_channel))
+			scroll_times_binding.Set(float64(<-scroll_progress_channel))
 		}
 	}()
 	go func() {
@@ -96,7 +97,7 @@ func main() {
 		main_box = container.NewBorder(widget.NewSeparator(), widget.NewSeparator(), nil, nil, status)
 		box = container.NewBorder(up, down, nil, nil, main_box)
 		window.SetContent(box)
-		wishitems = get_wishlist(url.Text)
+		wishitems = get_wishlist(url.Text, scroll_progress_channel, scroll_max_channel)
 		main_box.RemoveAll()
 		status = widget.NewLabel("可勾選必列入組合結果的遊戲")
 		for index := 0; index < len(wishitems); index++ {

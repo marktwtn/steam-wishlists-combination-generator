@@ -12,24 +12,19 @@ import (
 	"github.com/chromedp/chromedp"
 )
 
-var scroll_times int = 0
-var scroll_times_max int = 1
-var scroll_channel = make(chan int, 3)
-var scroll_max_channel = make(chan int, 1)
-
-func get_wishlist(url string) []Wishitem {
+func get_wishlist(url string, scroll_progress_channel chan<- int, scroll_max_channel chan<- int) []Wishitem {
 	ctx, cancel := chromedp.NewContext(context.Background())
 	defer cancel()
 
 	height := detect_webpage_height(ctx, url)
-	scroll_max_channel <- int(height) + SCROLL_DOWN_UNIT
+	scroll_times_max := int(height) + SCROLL_DOWN_UNIT
+	scroll_max_channel <- scroll_times_max
 
 	var data []*cdp.Node
 	var tasks chromedp.Tasks
 	var wishlist = make(map[string]Wishitem)
-	scroll_times_max = int(height) + SCROLL_DOWN_UNIT
 	var scroll_count = 0
-	for scroll_times = 0; scroll_times*SCROLL_DOWN_UNIT < int(height)+SCROLL_DOWN_UNIT; scroll_times++ {
+	for scroll_times := 0; scroll_times*SCROLL_DOWN_UNIT < int(height)+SCROLL_DOWN_UNIT; scroll_times++ {
 		// Scroll down
 		tasks = append(tasks, chromedp.Evaluate("window.scrollTo(0, "+strconv.Itoa(scroll_times*SCROLL_DOWN_UNIT)+");", nil))
 		// Loading
@@ -72,7 +67,7 @@ func get_wishlist(url string) []Wishitem {
 		tasks = append(tasks,
 			chromedp.ActionFunc(func(context.Context) error {
 				scroll_count++
-				scroll_channel <- scroll_count * SCROLL_DOWN_UNIT
+				scroll_progress_channel <- scroll_count * SCROLL_DOWN_UNIT
 				return nil
 			}))
 	}
