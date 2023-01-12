@@ -1,11 +1,11 @@
-module main
+module github.com/marktwtn/steam-wishlists-combination-generator
 
 go 1.19
 
 require (
 	fyne.io/fyne/v2 v2.3.0
-	github.com/chromedp/cdproto v0.0.0-20221126224343-3a0787b8dd28
-	github.com/chromedp/chromedp v0.8.6
+	github.com/chromedp/cdproto v0.0.0-20230109101555-6b041c6303cc
+	github.com/chromedp/chromedp v0.8.7
 	github.com/stretchr/testify v1.8.1
 )
 

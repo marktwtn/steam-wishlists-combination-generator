@@ -1,4 +1,4 @@
-package main
+package crawler
 
 import (
 	"context"
@@ -12,7 +12,16 @@ import (
 	"github.com/chromedp/chromedp"
 )
 
-func get_wishlist(url string, scroll_progress_channel chan<- int, scroll_max_channel chan<- int) []Wishitem {
+type Wishitem struct {
+	index            uint
+	name             string
+	discount_price   uint
+	discount_percent uint
+}
+
+const SCROLL_DOWN_UNIT int = 2000
+
+func Get_wishlist(url string, scroll_progress_channel chan<- int, scroll_max_channel chan<- int) []Wishitem {
 	ctx, cancel := chromedp.NewContext(context.Background())
 	defer cancel()
 
@@ -204,4 +213,35 @@ func remove_neg_and_percent_sign(input string) string {
 
 func remove_thousand_comma(input string) string {
 	return strings.ReplaceAll(input, ",", "")
+}
+
+func (w Wishitem) Get_index() uint {
+	return w.index
+}
+
+func (w *Wishitem) Set_index(new_index uint) {
+	w.index = new_index
+}
+
+func (w Wishitem) Get_name() string {
+	return w.name
+}
+
+func (w Wishitem) Get_discount_price() uint {
+	return w.discount_price
+}
+
+func (w Wishitem) Get_discount_price_str() string {
+	return strconv.Itoa(int(w.discount_price)) + "元"
+}
+
+func (w Wishitem) Get_discount_percent() uint {
+	return w.discount_percent
+}
+
+func (w Wishitem) Get_discount_percent_str() string {
+	if w.discount_percent == 100 {
+		return ""
+	}
+	return "(" + strconv.FormatFloat(float64(w.discount_percent)/10, 'f', -1, 64) + "折)"
 }
