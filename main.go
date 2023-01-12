@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"strconv"
+	"unicode/utf8"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -98,7 +100,7 @@ func main() {
 		}
 		var new_box_for_scroll = container.NewVBox()
 		for index, wishitem := range wishitems {
-			var wishitem_info = wishitem.Get_name() + "    " + wishitem.Get_discount_price_str() + "    " + wishitem.Get_discount_percent_str()
+			var wishitem_info = fmt.Sprintf("%8s %-8s %s", wishitem.Get_discount_price_str(), wishitem.Get_discount_percent_str(), wishitem.Get_name())
 			var check = widget.NewCheckWithData(wishitem_info, check_list[index])
 			new_box_for_scroll.Add(check)
 		}
@@ -224,12 +226,7 @@ func write_data(writer fyne.URIWriteCloser, combinations []Combination) {
 	var selected_info = ""
 	var selected_total_price uint = 0
 	for _, wishitem := range wishitems_with_selected {
-		selected_info += wishitem.Get_name()
-		selected_info += "    "
-		selected_info += wishitem.Get_discount_price_str()
-		selected_info += "    "
-		selected_info += wishitem.Get_discount_percent_str()
-		selected_info += "\n"
+		selected_info += fmt.Sprintf("%-[1]*s %8s %s\n", 50-(len(wishitem.Get_name())-utf8.RuneCountInString(wishitem.Get_name()))/2, wishitem.Get_name(), wishitem.Get_discount_price_str(), wishitem.Get_discount_percent_str())
 		selected_total_price += wishitem.Get_discount_price()
 	}
 	for _, combination := range combinations {
@@ -237,12 +234,7 @@ func write_data(writer fyne.URIWriteCloser, combinations []Combination) {
 		info += selected_info
 		for _, index := range combination.wishitems_index {
 			var wishitem = wishitems_without_selected[index]
-			info += wishitem.Get_name()
-			info += "    "
-			info += wishitem.Get_discount_price_str()
-			info += "    "
-			info += wishitem.Get_discount_percent_str()
-			info += "\n"
+			info += fmt.Sprintf("%-[1]*s %8s %s\n", 50-(len(wishitem.Get_name())-utf8.RuneCountInString(wishitem.Get_name()))/2, wishitem.Get_name(), wishitem.Get_discount_price_str(), wishitem.Get_discount_percent_str())
 		}
 		info += strconv.Itoa(int(selected_total_price+combination.total_price)) + "元"
 		info += "\n\n"
