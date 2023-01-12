@@ -19,10 +19,8 @@ type Combination struct {
 
 const UNSELECTED_MAX int = 5
 
-var wishitems []crawler.Wishitem
 var wishitems_with_selected []crawler.Wishitem
 var wishitems_without_selected []crawler.Wishitem
-var combinations [][]Combination
 var diff_binding binding.String = binding.NewString()
 var combination_channel = make(chan int, 100)
 
@@ -76,6 +74,7 @@ func main() {
 	var main_box = container.NewBorder(widget.NewSeparator(), widget.NewSeparator(), nil, nil, status)
 	var box = container.NewBorder(up, down, nil, nil, main_box)
 
+	var wishitems []crawler.Wishitem
 	var check_list []binding.Bool
 	var combination_count_binding = binding.NewFloat()
 	combination_progress = widget.NewProgressBar()
@@ -117,6 +116,7 @@ func main() {
 		},
 		window)
 	file_save.SetFileName("steam願望清單組合")
+	var combinations [][]Combination
 	down.Add(widget.NewButton("產生組合結果並存檔", func() {
 		wishitems_with_selected = []crawler.Wishitem{}
 		wishitems_without_selected = []crawler.Wishitem{}
