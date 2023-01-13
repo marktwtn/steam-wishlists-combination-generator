@@ -16,4 +16,4 @@ linux-exec: linux
 	./$(linux_exec_file)
 
 test:
-	go test -v *.go
+	go test -v
