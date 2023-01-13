@@ -23,7 +23,6 @@ const UNSELECTED_MAX int = 5
 
 var wishitems_with_selected []crawler.Wishitem
 var wishitems_without_selected []crawler.Wishitem
-var diff_binding binding.String = binding.NewString()
 var combination_channel = make(chan int, 100)
 
 // GUI
@@ -56,6 +55,7 @@ func main() {
 	}()
 	var up_1 = widget.NewForm(widget.NewFormItem("抓取願望清單進度", progress))
 	up.Add(up_1)
+	var diff_binding binding.String = binding.NewString()
 	var up_2 = widget.NewForm(widget.NewFormItem("金額與信用卡折扣的可容忍差額", widget.NewEntryWithData(diff_binding)))
 	up.Add(up_2)
 	var unselected_max int
@@ -151,7 +151,8 @@ func main() {
 		}
 		combination_progress.Max = float64(combination_max)
 		combinations = generate_all_combination(limit, wishitems_without_selected)
-		acceptable_combination_list = get_acceptable_combination(combinations)
+		var diff, _ = binding.StringToInt(diff_binding).Get()
+		acceptable_combination_list = get_acceptable_combination(uint(diff), combinations)
 		file_save.Show()
 	}))
 	down.Add(widget.NewLabel(
@@ -203,10 +204,8 @@ func get_combination_count(selected int, total int) int {
 	return result
 }
 
-func get_acceptable_combination(combinations_list [][]Combination) []Combination {
+func get_acceptable_combination(diff uint, combinations_list [][]Combination) []Combination {
 	var acceptable_combination []Combination
-	var diff, _ = diff_binding.Get()
-	var diff_val, _ = strconv.Atoi(diff)
 	var selected_total_price uint = 0
 	for _, wishitem := range wishitems_with_selected {
 		selected_total_price += wishitem.Get_discount_price()
@@ -214,7 +213,7 @@ func get_acceptable_combination(combinations_list [][]Combination) []Combination
 	for _, combinations := range combinations_list {
 		for _, combination := range combinations {
 			var total = selected_total_price + combination.total_price
-			if total >= 100 && total%100 <= uint(diff_val) {
+			if total >= 100 && total%100 <= diff {
 				acceptable_combination = append(acceptable_combination, combination)
 			}
 		}
