@@ -9,6 +9,7 @@ import (
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
+	"fyne.io/fyne/v2/data/validation"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
 	"github.com/marktwtn/steam-wishlists-combination-generator/crawler"
@@ -56,7 +57,9 @@ func main() {
 	var up_1 = widget.NewForm(widget.NewFormItem("抓取願望清單進度", progress))
 	up.Add(up_1)
 	var diff_binding binding.String = binding.NewString()
-	var up_2 = widget.NewForm(widget.NewFormItem("金額與信用卡折扣的可容忍差額", widget.NewEntryWithData(diff_binding)))
+	var diff_entry = widget.NewEntryWithData(diff_binding)
+	diff_entry.Validator = validation.NewRegexp("^[0-9]{0,2}$", "請輸入介於 0 ~ 99 的數字")
+	var up_2 = widget.NewForm(widget.NewFormItem("金額與信用卡折扣的可容忍差額", diff_entry))
 	up.Add(up_2)
 	var unselected_max int
 	var option = []string{}
