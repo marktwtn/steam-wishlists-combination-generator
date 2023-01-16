@@ -90,7 +90,11 @@ func main() {
 	}()
 	combination_progress.Bind(combination_count_binding)
 	down.Add(widget.NewButton("從網址抓取資料", func() {
-		main_box.RemoveAll()
+		var reset = func() {
+			check_list = nil
+			main_box.RemoveAll()
+		}
+		reset()
 		status = widget.NewLabel("抓取資料中......")
 		main_box = container.NewBorder(widget.NewSeparator(), widget.NewSeparator(), nil, nil, status)
 		box = container.NewBorder(up, down, nil, nil, main_box)
@@ -98,7 +102,6 @@ func main() {
 		wishitems = crawler.Get_wishlist(url.Text, scroll_progress_channel, scroll_max_channel)
 		main_box.RemoveAll()
 		status = widget.NewLabel("可勾選必列入組合結果的遊戲")
-		check_list = nil
 		for index := 0; index < len(wishitems); index++ {
 			check_list = append(check_list, binding.NewBool())
 		}
