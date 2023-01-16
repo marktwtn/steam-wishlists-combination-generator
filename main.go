@@ -98,6 +98,7 @@ func main() {
 		wishitems = crawler.Get_wishlist(url.Text, scroll_progress_channel, scroll_max_channel)
 		main_box.RemoveAll()
 		status = widget.NewLabel("可勾選必列入組合結果的遊戲")
+		check_list = nil
 		for index := 0; index < len(wishitems); index++ {
 			check_list = append(check_list, binding.NewBool())
 		}
