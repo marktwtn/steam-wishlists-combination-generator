@@ -20,11 +20,21 @@ jobs:
         sudo apt install libgl1-mesa-dev xorg-dev
         make linux
 
+    - name: Archive Linux executable file
+      uses: actions/upload-artifact@v3
+      with:
+        path: linux-generator
+
     - name: Windows build (Cross compile)
       run: |
         sudo apt install mingw-w64
         sudo apt install mingw-w64-x86-64-dev
         make windows
+
+    - name: Archive Windows executable file
+      uses: actions/upload-artifact@v3
+      with:
+        path: windows-generator.exe
 
     - name: Unit test
       run: make test
