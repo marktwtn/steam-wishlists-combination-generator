@@ -37,8 +37,8 @@ func main() {
 
 	var up = container.NewVBox()
 	var url = widget.NewEntry()
-	var up_0 = widget.NewForm(widget.NewFormItem("願望清單網址", url))
-	up.Add(up_0)
+	var url_widget = widget.NewForm(widget.NewFormItem("願望清單網址", url))
+	up.Add(url_widget)
 	var progress = widget.NewProgressBar()
 	var scroll_times_binding = binding.NewFloat()
 	progress.Bind(scroll_times_binding)
@@ -54,29 +54,15 @@ func main() {
 			progress.Max = float64(<-scroll_max_channel)
 		}
 	}()
-	var up_1 = widget.NewForm(widget.NewFormItem("抓取願望清單進度", progress))
-	up.Add(up_1)
-	var diff_binding binding.String = binding.NewString()
-	var diff_entry = widget.NewEntryWithData(diff_binding)
-	diff_entry.Validator = validation.NewRegexp("^[0-9]{0,2}$", "請輸入介於 0 ~ 99 的數字")
-	var up_2 = widget.NewForm(widget.NewFormItem("金額與信用卡折扣的可容忍差額", diff_entry))
-	up.Add(up_2)
-	var unselected_max int
-	var option = []string{}
-	for index := 0; index <= UNSELECTED_MAX; index++ {
-		option = append(option, strconv.Itoa(index))
-	}
-	var unselected_limit = widget.NewSelect(option, func(data string) {
-		unselected_max, _ = strconv.Atoi(data)
-	})
-	unselected_limit.SetSelected(option[len(option)-1])
+	var crawler_progress_widget = widget.NewForm(widget.NewFormItem("抓取願望清單進度", progress))
+	up.Add(crawler_progress_widget)
+	var diff_binding = binding.NewInt()
+	up.Add(create_diff_widget(&diff_binding))
 	var lower_bound_binding = binding.NewInt()
 	var upper_bound_binding = binding.NewInt()
 	up.Add(create_budget_widget(&lower_bound_binding, &upper_bound_binding))
-	var up_4 = widget.NewForm(widget.NewFormItem("搭配非勾選的遊戲上限數量", unselected_limit))
-	up.Add(up_4)
-	var up_5 = widget.NewForm(widget.NewFormItem("願望清單越多，「搭配非勾選的遊戲上限數量」數值設定越高，產出組合的時間越長", widget.NewLabel("")))
-	up.Add(up_5)
+	var unselected_max int
+	up.Add(create_select_limit_widget(&unselected_max))
 	var down = container.NewHBox()
 	var status = widget.NewLabel("無願望清單")
 	var main_box = container.NewBorder(widget.NewSeparator(), widget.NewSeparator(), nil, nil, status)
@@ -161,7 +147,7 @@ func main() {
 		}
 		combination_progress.Max = float64(combination_max)
 		combinations = generate_all_combination(limit, wishitems_without_selected)
-		var diff, _ = binding.StringToInt(diff_binding).Get()
+		diff, _ := diff_binding.Get()
 		lower_bound, _ := lower_bound_binding.Get()
 		upper_bound, _ := upper_bound_binding.Get()
 		acceptable_combination_list = get_acceptable_combination(uint(diff), lower_bound, upper_bound, combinations)
@@ -172,6 +158,13 @@ func main() {
 
 	window.SetContent(box)
 	window.ShowAndRun()
+}
+
+func create_diff_widget(diff_binding *binding.Int) fyne.CanvasObject {
+	var diff_entry = widget.NewEntryWithData(binding.IntToString(*diff_binding))
+	diff_entry.Validator = validation.NewRegexp("^[0-9]{0,2}$", "請輸入介於 0 ~ 99 的數字")
+
+	return widget.NewForm(widget.NewFormItem("金額與信用卡折扣的可容忍差額", diff_entry))
 }
 
 func create_budget_widget(lower_bound_binding *binding.Int, upper_bound_binding *binding.Int) fyne.CanvasObject {
@@ -200,7 +193,20 @@ func create_budget_widget(lower_bound_binding *binding.Int, upper_bound_binding 
 	lower_bound_widget.OnCursorChanged = check_budget
 	upper_bound_widget.OnCursorChanged = check_budget
 
-	return container.NewGridWithRows(1, lower_bound_widget, tilde, upper_bound_widget, budget_info)
+	return widget.NewForm(widget.NewFormItem("預算範圍", container.NewGridWithRows(1, lower_bound_widget, tilde, upper_bound_widget, budget_info)))
+}
+
+func create_select_limit_widget(unselected_max *int) fyne.CanvasObject {
+	var option = []string{}
+	for index := 0; index <= UNSELECTED_MAX; index++ {
+		option = append(option, strconv.Itoa(index))
+	}
+	var unselected_limit = widget.NewSelect(option, func(data string) {
+		*unselected_max, _ = strconv.Atoi(data)
+	})
+	unselected_limit.SetSelected(option[len(option)-1])
+
+	return widget.NewForm(widget.NewFormItem("搭配非勾選的遊戲上限數量", container.NewGridWithRows(1, unselected_limit, widget.NewLabel("願望清單越多，「搭配非勾選的遊戲上限數量」數值設定越高，產出組合的時間越長"))))
 }
 
 func is_budget_valid(lower_bound int, upper_bound int) bool {
