@@ -70,10 +70,34 @@ func main() {
 		unselected_max, _ = strconv.Atoi(data)
 	})
 	unselected_limit.SetSelected(option[len(option)-1])
-	var up_3 = widget.NewForm(widget.NewFormItem("搭配非勾選的遊戲上限數量", unselected_limit))
+	var lower_bound_binding = binding.NewInt()
+	var lower_bound_widget = widget.NewEntryWithData(binding.IntToString(lower_bound_binding))
+	lower_bound_widget.Validator = validation.NewRegexp("^[0-9]*$", "請輸入大於 0 的數字")
+	var tilde = widget.NewLabel("~")
+	tilde.Alignment = fyne.TextAlignCenter
+	var upper_bound_binding = binding.NewInt()
+	upper_bound_binding.Set(10000)
+	var upper_bound_widget = widget.NewEntryWithData(binding.IntToString(upper_bound_binding))
+	upper_bound_widget.Validator = validation.NewRegexp("^[0-9]*$", "請輸入大於 0 的數字")
+	var budget_info = widget.NewLabel("")
+	var budget_widget = container.NewGridWithRows(1, lower_bound_widget, tilde, upper_bound_widget, budget_info)
+	var check_budget = func() {
+		lower_bound, _ := lower_bound_binding.Get()
+		upper_bound, _ := upper_bound_binding.Get()
+		if is_budget_valid(lower_bound, upper_bound) {
+			budget_info.SetText("")
+		} else {
+			budget_info.SetText("警告: 不合理的預算範圍")
+		}
+	}
+	lower_bound_widget.OnCursorChanged = check_budget
+	upper_bound_widget.OnCursorChanged = check_budget
+	var up_3 = widget.NewForm(widget.NewFormItem("預算範圍", budget_widget))
 	up.Add(up_3)
-	var up_4 = widget.NewForm(widget.NewFormItem("願望清單越多，「搭配非勾選的遊戲上限數量」數值設定越高，產出組合的時間越長", widget.NewLabel("")))
+	var up_4 = widget.NewForm(widget.NewFormItem("搭配非勾選的遊戲上限數量", unselected_limit))
 	up.Add(up_4)
+	var up_5 = widget.NewForm(widget.NewFormItem("願望清單越多，「搭配非勾選的遊戲上限數量」數值設定越高，產出組合的時間越長", widget.NewLabel("")))
+	up.Add(up_5)
 	var down = container.NewHBox()
 	var status = widget.NewLabel("無願望清單")
 	var main_box = container.NewBorder(widget.NewSeparator(), widget.NewSeparator(), nil, nil, status)
@@ -159,7 +183,9 @@ func main() {
 		combination_progress.Max = float64(combination_max)
 		combinations = generate_all_combination(limit, wishitems_without_selected)
 		var diff, _ = binding.StringToInt(diff_binding).Get()
-		acceptable_combination_list = get_acceptable_combination(uint(diff), combinations)
+		lower_bound, _ := lower_bound_binding.Get()
+		upper_bound, _ := upper_bound_binding.Get()
+		acceptable_combination_list = get_acceptable_combination(uint(diff), lower_bound, upper_bound, combinations)
 		file_save.Show()
 	}))
 	down.Add(widget.NewLabel(
@@ -167,6 +193,16 @@ func main() {
 
 	window.SetContent(box)
 	window.ShowAndRun()
+}
+
+func is_budget_valid(lower_bound int, upper_bound int) bool {
+	if lower_bound < 0 || upper_bound < 0 {
+		return false
+	}
+	if lower_bound > upper_bound {
+		return false
+	}
+	return true
 }
 
 func generate_all_combination(unselected_count int, wishitems []crawler.Wishitem) [][]Combination {
@@ -211,7 +247,7 @@ func get_combination_count(selected int, total int) int {
 	return result
 }
 
-func get_acceptable_combination(diff uint, combinations_list [][]Combination) []Combination {
+func get_acceptable_combination(diff uint, lower_bound int, upper_bound int, combinations_list [][]Combination) []Combination {
 	var acceptable_combination []Combination
 	var selected_total_price uint = 0
 	for _, wishitem := range wishitems_with_selected {
@@ -220,7 +256,7 @@ func get_acceptable_combination(diff uint, combinations_list [][]Combination) []
 	for _, combinations := range combinations_list {
 		for _, combination := range combinations {
 			var total = selected_total_price + combination.total_price
-			if total >= 100 && total%100 <= diff {
+			if total >= 100 && total%100 <= diff && total >= uint(lower_bound) && total <= uint(upper_bound) {
 				acceptable_combination = append(acceptable_combination, combination)
 			}
 		}
