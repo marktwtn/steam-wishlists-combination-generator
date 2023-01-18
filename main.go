@@ -35,10 +35,10 @@ func main() {
 	window := new_app.NewWindow("Steam願望清單最佳組合程式")
 	window.SetMaster()
 
-	var up = container.NewVBox()
+	var up = widget.NewForm()
 	var url = widget.NewEntry()
-	var url_widget = widget.NewForm(widget.NewFormItem("願望清單網址", url))
-	up.Add(url_widget)
+	var url_widget = widget.NewFormItem("願望清單網址", url)
+	up.AppendItem(url_widget)
 	var progress = widget.NewProgressBar()
 	var scroll_times_binding = binding.NewFloat()
 	progress.Bind(scroll_times_binding)
@@ -54,15 +54,15 @@ func main() {
 			progress.Max = float64(<-scroll_max_channel)
 		}
 	}()
-	var crawler_progress_widget = widget.NewForm(widget.NewFormItem("抓取願望清單進度", progress))
-	up.Add(crawler_progress_widget)
+	var crawler_progress_widget = widget.NewFormItem(fmt.Sprintf("%8s", "抓取願望清單進度"), progress)
+	up.AppendItem(crawler_progress_widget)
 	var diff_binding = binding.NewInt()
-	up.Add(create_diff_widget(&diff_binding))
+	up.AppendItem(create_diff_widget(&diff_binding))
 	var lower_bound_binding = binding.NewInt()
 	var upper_bound_binding = binding.NewInt()
-	up.Add(create_budget_widget(&lower_bound_binding, &upper_bound_binding))
+	up.AppendItem(create_budget_widget(&lower_bound_binding, &upper_bound_binding))
 	var unselected_max int
-	up.Add(create_select_limit_widget(&unselected_max))
+	up.AppendItem(create_select_limit_widget(&unselected_max))
 	var down = container.NewHBox()
 	var status = widget.NewLabel("無願望清單")
 	var main_box = container.NewBorder(widget.NewSeparator(), widget.NewSeparator(), nil, nil, status)
@@ -160,14 +160,14 @@ func main() {
 	window.ShowAndRun()
 }
 
-func create_diff_widget(diff_binding *binding.Int) fyne.CanvasObject {
+func create_diff_widget(diff_binding *binding.Int) *widget.FormItem {
 	var diff_entry = widget.NewEntryWithData(binding.IntToString(*diff_binding))
 	diff_entry.Validator = validation.NewRegexp("^[0-9]{0,2}$", "請輸入介於 0 ~ 99 的數字")
 
-	return widget.NewForm(widget.NewFormItem("金額與信用卡折扣的可容忍差額", diff_entry))
+	return widget.NewFormItem("金額與信用卡折扣的可容忍差額", diff_entry)
 }
 
-func create_budget_widget(lower_bound_binding *binding.Int, upper_bound_binding *binding.Int) fyne.CanvasObject {
+func create_budget_widget(lower_bound_binding *binding.Int, upper_bound_binding *binding.Int) *widget.FormItem {
 	(*lower_bound_binding).Set(100)
 	var lower_bound_widget = widget.NewEntryWithData(binding.IntToString(*lower_bound_binding))
 	lower_bound_widget.Validator = validation.NewRegexp("^[0-9]*$", "請輸入大於 0 的數字")
@@ -193,10 +193,10 @@ func create_budget_widget(lower_bound_binding *binding.Int, upper_bound_binding 
 	lower_bound_widget.OnCursorChanged = check_budget
 	upper_bound_widget.OnCursorChanged = check_budget
 
-	return widget.NewForm(widget.NewFormItem("預算範圍", container.NewGridWithRows(1, lower_bound_widget, tilde, upper_bound_widget, budget_info)))
+	return widget.NewFormItem("預算範圍", container.NewGridWithRows(1, lower_bound_widget, tilde, upper_bound_widget, budget_info))
 }
 
-func create_select_limit_widget(unselected_max *int) fyne.CanvasObject {
+func create_select_limit_widget(unselected_max *int) *widget.FormItem {
 	var option = []string{}
 	for index := 0; index <= UNSELECTED_MAX; index++ {
 		option = append(option, strconv.Itoa(index))
@@ -206,7 +206,7 @@ func create_select_limit_widget(unselected_max *int) fyne.CanvasObject {
 	})
 	unselected_limit.SetSelected(option[len(option)-1])
 
-	return widget.NewForm(widget.NewFormItem("搭配非勾選的遊戲上限數量", container.NewGridWithRows(1, unselected_limit, widget.NewLabel("願望清單越多，「搭配非勾選的遊戲上限數量」數值設定越高，產出組合的時間越長"))))
+	return widget.NewFormItem("搭配非勾選的遊戲上限數量", container.NewGridWithRows(1, unselected_limit, widget.NewLabel("願望清單越多，「搭配非勾選的遊戲上限數量」數值設定越高，產出組合的時間越長")))
 }
 
 func is_budget_valid(lower_bound int, upper_bound int) bool {
