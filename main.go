@@ -53,7 +53,7 @@ func main() {
 			progress.Max = float64(<-scroll_max_channel)
 		}
 	}()
-	var crawler_progress_widget = widget.NewFormItem(fmt.Sprintf("%8s", "抓取願望清單進度"), progress)
+	var crawler_progress_widget = widget.NewFormItem("抓取願望清單進度", progress)
 	up.AppendItem(crawler_progress_widget)
 	var diff_binding = binding.NewInt()
 	up.AppendItem(create_diff_widget(new_app, &diff_binding))
