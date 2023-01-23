@@ -39,23 +39,10 @@ func main() {
 	var up_crawler = widget.NewForm()
 	var url_binding = binding.NewString()
 	up_crawler.AppendItem(create_url_widget(new_app, &url_binding))
-	var progress = widget.NewProgressBar()
 	var scroll_times_binding = binding.NewFloat()
-	progress.Bind(scroll_times_binding)
 	var scroll_progress_channel = make(chan int, 10)
 	var scroll_max_channel = make(chan int, 1)
-	go func() {
-		for {
-			scroll_times_binding.Set(float64(<-scroll_progress_channel))
-		}
-	}()
-	go func() {
-		for {
-			progress.Max = float64(<-scroll_max_channel)
-		}
-	}()
-	var crawler_progress_widget = widget.NewFormItem("抓取願望清單進度", progress)
-	up_crawler.AppendItem(crawler_progress_widget)
+	up_crawler.AppendItem(create_progress_widget(&scroll_times_binding, scroll_progress_channel, scroll_max_channel))
 	up.Add(up_crawler)
 	up.Add(widget.NewSeparator())
 	var up_config = widget.NewForm()
@@ -84,6 +71,7 @@ func main() {
 	combination_progress.Bind(combination_count_binding)
 	down.Add(widget.NewButton("從網址抓取資料", func() {
 		var reset = func() {
+			scroll_times_binding.Set(0)
 			check_list = nil
 			main_box.RemoveAll()
 		}
@@ -174,6 +162,23 @@ func create_url_widget(app fyne.App, url_binding *binding.String) *widget.FormIt
 	}
 
 	return widget.NewFormItem("願望清單網址", url_entry)
+}
+
+func create_progress_widget(scroll_times_binding *binding.Float, scroll_progress_channel chan int, scroll_max_channel chan int) *widget.FormItem {
+	var progress = widget.NewProgressBar()
+	progress.Bind(*scroll_times_binding)
+	go func() {
+		for {
+			(*scroll_times_binding).Set(float64(<-scroll_progress_channel))
+		}
+	}()
+	go func() {
+		for {
+			progress.Max = float64(<-scroll_max_channel)
+		}
+	}()
+
+	return widget.NewFormItem("抓取願望清單進度", progress)
 }
 
 func create_diff_widget(app fyne.App, diff_binding *binding.Int) *widget.FormItem {
