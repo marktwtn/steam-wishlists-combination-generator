@@ -192,7 +192,7 @@ func create_progress_widget(scroll_times_binding *binding.Float, scroll_progress
 }
 
 func create_diff_widget(app fyne.App, diff_binding *binding.Int) *widget.FormItem {
-	(*diff_binding).Set(app.Preferences().Int("diff"))
+	(*diff_binding).Set(app.Preferences().IntWithFallback("diff", 20))
 	var diff_entry = widget.NewEntryWithData(binding.IntToString(*diff_binding))
 	diff_entry.OnCursorChanged = func() {
 		var diff, _ = (*diff_binding).Get()
@@ -216,7 +216,7 @@ func create_budget_widget(app fyne.App, lower_bound_binding *binding.Int, upper_
 	tilde.Alignment = fyne.TextAlignCenter
 
 	if app.Preferences().Int("upper_bound") <= 0 {
-		(*upper_bound_binding).Set(1000)
+		(*upper_bound_binding).Set(2000)
 	} else {
 		(*upper_bound_binding).Set(app.Preferences().Int("upper_bound"))
 	}
