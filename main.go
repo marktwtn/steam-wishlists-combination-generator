@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 	"unicode/utf8"
@@ -84,6 +85,9 @@ func main() {
 		window.SetContent(box)
 		var url, _ = url_binding.Get()
 		wishitems = crawler.Get_wishlist(url, scroll_progress_channel, scroll_max_channel)
+		sort.SliceStable(wishitems, func(i, j int) bool {
+			return wishitems[i].Get_discount_price() < wishitems[j].Get_discount_price()
+		})
 		main_box.RemoveAll()
 		status = widget.NewLabel("可勾選必列入組合結果的遊戲")
 		for index := 0; index < len(wishitems); index++ {
