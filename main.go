@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"strconv"
+	"strings"
 	"unicode/utf8"
 
 	"fyne.io/fyne/v2"
@@ -11,6 +12,7 @@ import (
 	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/data/validation"
 	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/storage"
 	"fyne.io/fyne/v2/widget"
 	"github.com/marktwtn/steam-wishlists-combination-generator/crawler"
 )
@@ -99,16 +101,24 @@ func main() {
 		window.SetContent(box)
 	}))
 	var acceptable_combination_list []Combination
+	var save_uri string
 	var file_save = dialog.NewFileSave(
 		func(writer fyne.URIWriteCloser, err error) {
 			if writer != nil {
+				new_app.Preferences().SetString("save_uri", writer.URI().String())
 				write_data(writer, acceptable_combination_list)
 			}
 		},
 		window)
-	file_save.SetFileName("steam願望清單組合")
 	var combinations [][]Combination
 	down.Add(widget.NewButton("產生組合結果並存檔", func() {
+		file_save.SetFileName("steam願望清單組合")
+		if new_app.Preferences().StringWithFallback("save_uri", "") != "" {
+			save_uri = remove_file_in_uri(new_app.Preferences().String("save_uri"))
+			uri, _ := storage.ParseURI(save_uri)
+			location, _ := storage.ListerForURI(uri)
+			file_save.SetLocation(location)
+		}
 		wishitems_with_selected = []crawler.Wishitem{}
 		wishitems_without_selected = []crawler.Wishitem{}
 		var without_selected_index = 0
@@ -326,6 +336,11 @@ func get_acceptable_combination(diff uint, lower_bound int, upper_bound int, com
 		}
 	}
 	return acceptable_combination
+}
+
+func remove_file_in_uri(uri string) string {
+	last_slash_index := strings.LastIndex(uri, "/")
+	return uri[0:last_slash_index]
 }
 
 func write_data(writer fyne.URIWriteCloser, combinations []Combination) {
