@@ -102,9 +102,10 @@ func main() {
 		}
 		var new_box_for_scroll = container.NewVBox()
 		for index, wishitem := range wishitems {
-			var wishitem_info = fmt.Sprintf("%8s %-8s %s", wishitem.Get_discount_price_str(), wishitem.Get_discount_percent_str(), wishitem.Get_name())
-			var check = widget.NewCheckWithData(wishitem_info, check_list[index])
-			new_box_for_scroll.Add(check)
+			check_and_name := widget.NewCheckWithData(wishitem.Get_name(), check_list[index])
+			price := container.NewGridWithColumns(4, widget.NewLabel(wishitem.Get_discount_price_str()), widget.NewLabel(wishitem.Get_discount_percent_str()))
+			item := container.NewGridWithColumns(4, check_and_name, price)
+			new_box_for_scroll.Add(item)
 		}
 		var scroll = container.NewVScroll(new_box_for_scroll)
 		main_box = container.NewBorder(widget.NewSeparator(), widget.NewSeparator(), nil, nil, container.NewBorder(container.NewVBox(status, container.NewGridWithColumns(1, widget.NewLabel("組合結果處理進度: "), combination_progress)), nil, nil, nil, scroll))
