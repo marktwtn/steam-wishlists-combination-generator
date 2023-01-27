@@ -23,14 +23,20 @@ type Combination struct {
 	wishitems_index []uint
 }
 
+type Config struct {
+	key           string
+	default_value int
+}
+
 const UNSELECTED_MAX int = 5
 
 var wishitems_with_selected []crawler.Wishitem
 var wishitems_without_selected []crawler.Wishitem
-var combination_channel = make(chan int, 100)
-
-// GUI
-var combination_progress *widget.ProgressBar
+var configs = map[string]Config{
+	"diff":        {"diff", 20},
+	"lower_bound": {"lower_bound", 100},
+	"upper_bound": {"upper_bound", 2000},
+}
 
 func main() {
 	new_app := app.NewWithID("steam-wishlists-combination-generator")
@@ -49,11 +55,11 @@ func main() {
 	up.Add(up_crawler)
 	up.Add(widget.NewSeparator())
 	var up_config = widget.NewForm()
-	var diff_binding = binding.NewInt()
-	up_config.AppendItem(create_diff_widget(new_app, &diff_binding))
-	var lower_bound_binding = binding.NewInt()
-	var upper_bound_binding = binding.NewInt()
-	up_config.AppendItem(create_budget_widget(new_app, &lower_bound_binding, &upper_bound_binding))
+	var diff_binding = set_default_and_bind_value(configs["diff"], new_app.Preferences())
+	up_config.AppendItem(create_diff_widget(&diff_binding))
+	var lower_bound_binding = set_default_and_bind_value(configs["lower_bound"], new_app.Preferences())
+	var upper_bound_binding = set_default_and_bind_value(configs["upper_bound"], new_app.Preferences())
+	up_config.AppendItem(create_budget_widget(&lower_bound_binding, &upper_bound_binding))
 	var unselected_max int
 	up_config.AppendItem(create_select_limit_widget(new_app, &unselected_max))
 	up.Add(up_config)
@@ -65,7 +71,8 @@ func main() {
 	var wishitems []crawler.Wishitem
 	var check_list []binding.Bool
 	var combination_count_binding = binding.NewFloat()
-	combination_progress = widget.NewProgressBar()
+	var combination_channel = make(chan int, 100)
+	var combination_progress = widget.NewProgressBar()
 	go func() {
 		for {
 			combination_count_binding.Set(float64(<-combination_channel))
@@ -114,8 +121,8 @@ func main() {
 			}
 		},
 		window)
-	var combinations [][]Combination
 	down.Add(widget.NewButton("產生組合結果並存檔", func() {
+		var combinations [][]Combination
 		file_save.SetFileName("steam願望清單組合")
 		if new_app.Preferences().StringWithFallback("save_uri", "") != "" {
 			save_uri = remove_file_in_uri(new_app.Preferences().String("save_uri"))
@@ -153,7 +160,7 @@ func main() {
 			combination_max += get_combination_count(index, len(wishitems_without_selected))
 		}
 		combination_progress.Max = float64(combination_max)
-		combinations = generate_all_combination(limit, wishitems_without_selected)
+		combinations = generate_all_combination(limit, wishitems_without_selected, combination_channel)
 		diff, _ := diff_binding.Get()
 		lower_bound, _ := lower_bound_binding.Get()
 		upper_bound, _ := upper_bound_binding.Get()
@@ -195,23 +202,24 @@ func create_progress_widget(scroll_times_binding *binding.Float, scroll_progress
 	return widget.NewFormItem("抓取願望清單進度", progress)
 }
 
-func create_diff_widget(app fyne.App, diff_binding *binding.Int) *widget.FormItem {
-	(*diff_binding).Set(app.Preferences().IntWithFallback("diff", 20))
+func set_default_and_bind_value(config Config, preference fyne.Preferences) binding.Int {
+	var val = preference.IntWithFallback(config.key, config.default_value)
+	var bind = binding.BindPreferenceInt(config.key, preference)
+	bind.Set(val)
+	return bind
+}
+
+func create_diff_widget(diff_binding *binding.Int) *widget.FormItem {
 	var diff_entry = widget.NewEntryWithData(binding.IntToString(*diff_binding))
-	diff_entry.OnCursorChanged = func() {
-		var diff, _ = (*diff_binding).Get()
-		app.Preferences().SetInt("diff", diff)
-	}
 	diff_entry.Validator = validation.NewRegexp("^[0-9]{0,2}$", "請輸入介於 0 ~ 99 的數字")
 
 	return widget.NewFormItem("金額與信用卡折扣的可容忍差額", diff_entry)
 }
 
-func create_budget_widget(app fyne.App, lower_bound_binding *binding.Int, upper_bound_binding *binding.Int) *widget.FormItem {
-	if app.Preferences().Int("lower_bound") <= 100 {
+func create_budget_widget(lower_bound_binding *binding.Int, upper_bound_binding *binding.Int) *widget.FormItem {
+	lower_bound, _ := (*lower_bound_binding).Get()
+	if lower_bound <= 100 {
 		(*lower_bound_binding).Set(100)
-	} else {
-		(*lower_bound_binding).Set(app.Preferences().Int("lower_bound"))
 	}
 	var lower_bound_widget = widget.NewEntryWithData(binding.IntToString(*lower_bound_binding))
 	lower_bound_widget.Validator = validation.NewRegexp("^[0-9]*$", "請輸入大於 0 的數字")
@@ -219,11 +227,6 @@ func create_budget_widget(app fyne.App, lower_bound_binding *binding.Int, upper_
 	var tilde = widget.NewLabel("~")
 	tilde.Alignment = fyne.TextAlignCenter
 
-	if app.Preferences().Int("upper_bound") <= 0 {
-		(*upper_bound_binding).Set(2000)
-	} else {
-		(*upper_bound_binding).Set(app.Preferences().Int("upper_bound"))
-	}
 	var upper_bound_widget = widget.NewEntryWithData(binding.IntToString(*upper_bound_binding))
 	upper_bound_widget.Validator = validation.NewRegexp("^[0-9]*$", "請輸入大於 0 的數字")
 
@@ -238,16 +241,8 @@ func create_budget_widget(app fyne.App, lower_bound_binding *binding.Int, upper_
 			budget_info.SetText("警告: 不合理的預算範圍")
 		}
 	}
-	lower_bound_widget.OnCursorChanged = func() {
-		var lower_bound, _ = (*lower_bound_binding).Get()
-		app.Preferences().SetInt("lower_bound", lower_bound)
-		check_budget()
-	}
-	upper_bound_widget.OnCursorChanged = func() {
-		var upper_bound, _ = (*upper_bound_binding).Get()
-		app.Preferences().SetInt("upper_bound", upper_bound)
-		check_budget()
-	}
+	lower_bound_widget.OnCursorChanged = check_budget
+	upper_bound_widget.OnCursorChanged = check_budget
 
 	return widget.NewFormItem("預算範圍", container.NewGridWithRows(1, lower_bound_widget, tilde, upper_bound_widget, budget_info))
 }
@@ -283,7 +278,7 @@ func is_budget_valid(lower_bound int, upper_bound int) bool {
 	return true
 }
 
-func generate_all_combination(unselected_count int, wishitems []crawler.Wishitem) [][]Combination {
+func generate_all_combination(unselected_count int, wishitems []crawler.Wishitem, combination_channel chan int) [][]Combination {
 	var result [][]Combination
 	var combination_count = 0
 	for index := 0; index <= len(wishitems); index++ {
