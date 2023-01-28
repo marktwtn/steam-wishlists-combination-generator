@@ -86,6 +86,7 @@ func main() {
 			main_box.RemoveAll()
 		}
 		reset()
+
 		status = widget.NewLabel("抓取資料中......")
 		main_box = container.NewBorder(widget.NewSeparator(), widget.NewSeparator(), nil, nil, status)
 		box = container.NewBorder(up, down, nil, nil, main_box)
@@ -96,6 +97,7 @@ func main() {
 			return wishitems[i].Get_discount_price() < wishitems[j].Get_discount_price()
 		})
 		main_box.RemoveAll()
+
 		status = widget.NewLabel("可勾選必列入組合結果的遊戲")
 		for index := 0; index < len(wishitems); index++ {
 			check_list = append(check_list, binding.NewBool())
@@ -112,25 +114,7 @@ func main() {
 		box = container.NewBorder(up, down, nil, nil, main_box)
 		window.SetContent(box)
 	}))
-	var acceptable_combination_list []Combination
-	var save_uri string
-	var file_save = dialog.NewFileSave(
-		func(writer fyne.URIWriteCloser, err error) {
-			if writer != nil {
-				new_app.Preferences().SetString("save_uri", writer.URI().String())
-				write_data(writer, acceptable_combination_list)
-			}
-		},
-		window)
 	down.Add(widget.NewButton("產生組合結果並存檔", func() {
-		var combinations [][]Combination
-		file_save.SetFileName("steam願望清單組合")
-		if new_app.Preferences().StringWithFallback("save_uri", "") != "" {
-			save_uri = remove_file_in_uri(new_app.Preferences().String("save_uri"))
-			uri, _ := storage.ParseURI(save_uri)
-			location, _ := storage.ListerForURI(uri)
-			file_save.SetLocation(location)
-		}
 		wishitems_with_selected = []crawler.Wishitem{}
 		wishitems_without_selected = []crawler.Wishitem{}
 		var without_selected_index = 0
@@ -153,19 +137,34 @@ func main() {
 		} else {
 			limit = len(wishitems_without_selected)
 		}
-		if limit > 5 {
-			limit = 5
+		if limit > UNSELECTED_MAX {
+			limit = UNSELECTED_MAX
 		}
-		var combination_max = 0
+		combination_max := 0
 		for index := 1; index <= limit; index++ {
 			combination_max += get_combination_count(index, len(wishitems_without_selected))
 		}
 		combination_progress.Max = float64(combination_max)
-		combinations = generate_all_combination(limit, wishitems_without_selected, combination_channel)
+		combinations := generate_all_combination(limit, wishitems_without_selected, combination_channel)
 		diff, _ := diff_binding.Get()
 		lower_bound, _ := lower_bound_binding.Get()
 		upper_bound, _ := upper_bound_binding.Get()
-		acceptable_combination_list = get_acceptable_combination(uint(diff), lower_bound, upper_bound, combinations)
+		acceptable_combination_list := get_acceptable_combination(uint(diff), lower_bound, upper_bound, combinations)
+		file_save := dialog.NewFileSave(
+			func(writer fyne.URIWriteCloser, err error) {
+				if writer != nil {
+					new_app.Preferences().SetString("save_uri", writer.URI().String())
+					write_data(writer, acceptable_combination_list)
+				}
+			},
+			window)
+		file_save.SetFileName("steam願望清單組合")
+		if new_app.Preferences().StringWithFallback("save_uri", "") != "" {
+			save_uri := remove_file_in_uri(new_app.Preferences().String("save_uri"))
+			uri, _ := storage.ParseURI(save_uri)
+			location, _ := storage.ListerForURI(uri)
+			file_save.SetLocation(location)
+		}
 		file_save.Show()
 	}))
 	down.Add(widget.NewLabel(
