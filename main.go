@@ -60,8 +60,8 @@ func main() {
 	var lower_bound_binding = set_default_and_bind_value(configs["lower_bound"], new_app.Preferences())
 	var upper_bound_binding = set_default_and_bind_value(configs["upper_bound"], new_app.Preferences())
 	up_config.AppendItem(create_budget_widget(&lower_bound_binding, &upper_bound_binding))
-	var unselected_max int
-	up_config.AppendItem(create_select_limit_widget(new_app, &unselected_max))
+	var unselected_number int
+	up_config.AppendItem(create_select_limit_widget(new_app, &unselected_number))
 	up.Add(up_config)
 	var down = container.NewHBox()
 	var status = widget.NewLabel("無願望清單")
@@ -131,15 +131,7 @@ func main() {
 				without_selected_index++
 			}
 		}
-		var limit int
-		if unselected_max < len(wishitems_without_selected) {
-			limit = unselected_max
-		} else {
-			limit = len(wishitems_without_selected)
-		}
-		if limit > UNSELECTED_MAX {
-			limit = UNSELECTED_MAX
-		}
+		limit := min(unselected_number, len(wishitems_without_selected), UNSELECTED_MAX)
 		combination_max := 0
 		for index := 1; index <= limit; index++ {
 			combination_max += get_combination_count(index, len(wishitems_without_selected))
@@ -247,23 +239,16 @@ func create_budget_widget(lower_bound_binding *binding.Int, upper_bound_binding 
 	return widget.NewFormItem("預算範圍", container.NewGridWithRows(1, lower_bound_widget, tilde, upper_bound_widget, budget_info))
 }
 
-func create_select_limit_widget(app fyne.App, unselected_max *int) *widget.FormItem {
+func create_select_limit_widget(app fyne.App, unselected_number *int) *widget.FormItem {
 	var option = []string{}
 	for index := 0; index <= UNSELECTED_MAX; index++ {
 		option = append(option, strconv.Itoa(index))
 	}
 	var unselected_limit = widget.NewSelect(option, func(data string) {
-		*unselected_max, _ = strconv.Atoi(data)
+		*unselected_number, _ = strconv.Atoi(data)
+		app.Preferences().SetInt("limit", *unselected_number)
 	})
-	if app.Preferences().Int("limit") < 0 {
-		unselected_limit.SetSelected(option[len(option)-1])
-	} else {
-		unselected_limit.SetSelected(option[app.Preferences().Int("limit")])
-	}
-	unselected_limit.OnChanged = func(s string) {
-		var limit, _ = strconv.Atoi(s)
-		app.Preferences().SetInt("limit", limit)
-	}
+	unselected_limit.SetSelected(option[app.Preferences().Int("limit")])
 
 	return widget.NewFormItem("搭配非勾選的遊戲上限數量", container.NewGridWithRows(1, unselected_limit, widget.NewLabel("願望清單越多，「搭配非勾選的遊戲上限數量」數值設定越高，產出組合的時間越長")))
 }
@@ -276,6 +261,19 @@ func is_budget_valid(lower_bound int, upper_bound int) bool {
 		return false
 	}
 	return true
+}
+
+func min(a int, b int, c int) int {
+	if a < b {
+		if a < c {
+			return a
+		}
+	} else {
+		if b < c {
+			return b
+		}
+	}
+	return c
 }
 
 func generate_all_combination(unselected_count int, wishitems []crawler.Wishitem, combination_channel chan int) [][]Combination {
