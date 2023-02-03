@@ -132,15 +132,11 @@ func main() {
 			}
 		}
 		limit := min(unselected_number, len(wishitems_without_selected), UNSELECTED_MAX)
-		combination_max := 0
-		for index := 1; index <= limit; index++ {
-			combination_max += get_combination_count(index, len(wishitems_without_selected))
-		}
-		combination_progress.Max = float64(combination_max)
-		combinations := generate_all_combination(limit, wishitems_without_selected, combination_channel)
+		combination_progress.Max = float64(limit)
 		diff, _ := diff_binding.Get()
 		lower_bound, _ := lower_bound_binding.Get()
 		upper_bound, _ := upper_bound_binding.Get()
+		combinations := generate_filtered_combination(limit, upper_bound, wishitems_without_selected, combination_channel)
 		acceptable_combination_list := get_acceptable_combination(uint(diff), lower_bound, upper_bound, combinations)
 		file_save := dialog.NewFileSave(
 			func(writer fyne.URIWriteCloser, err error) {
@@ -276,17 +272,17 @@ func min(a int, b int, c int) int {
 	return c
 }
 
-func generate_all_combination(unselected_count int, wishitems []crawler.Wishitem, combination_channel chan int) [][]Combination {
+func generate_filtered_combination(unselected_count int, price_limit int, wishitems []crawler.Wishitem, combination_channel chan int) [][]Combination {
 	var result [][]Combination
-	var combination_count = 0
 	for index := 0; index <= len(wishitems); index++ {
 		result = append(result, []Combination{})
 	}
 	// Total item in combination = 1
 	for _, wishitem := range wishitems {
 		var combination Combination = Combination{wishitem.Get_discount_price(), []uint{wishitem.Get_index()}}
-		result[1] = append(result[1], combination)
-		combination_count++
+		if combination.total_price < uint(price_limit) {
+			result[1] = append(result[1], combination)
+		}
 	}
 	// Total items in combination > 1
 	for index := 2; index <= unselected_count; index++ {
@@ -297,23 +293,13 @@ func generate_all_combination(unselected_count int, wishitems []crawler.Wishitem
 					new_wishitems_index := make([]uint, len(prev_combination.wishitems_index))
 					copy(new_wishitems_index, prev_combination.wishitems_index)
 					var new_combination Combination = Combination{prev_combination.total_price + wishitem.Get_discount_price(), append(new_wishitems_index, wishitem.Get_index())}
-					result[index] = append(result[index], new_combination)
-					combination_count++
-					combination_channel <- combination_count
+					if new_combination.total_price < uint(price_limit) {
+						result[index] = append(result[index], new_combination)
+					}
 				}
 			}
 		}
-	}
-	return result
-}
-
-func get_combination_count(selected int, total int) int {
-	if selected <= 0 || total <= 0 {
-		return 0
-	}
-	var result = 1
-	for index := 1; index <= selected; index++ {
-		result = result * (total - index + 1) / index
+		combination_channel <- index
 	}
 	return result
 }
