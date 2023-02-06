@@ -28,7 +28,7 @@ type Config struct {
 	default_value int
 }
 
-const UNSELECTED_MAX int = 5
+const UNSELECTED_MAX int = 10
 
 var wishitems_with_selected []crawler.Wishitem
 var wishitems_without_selected []crawler.Wishitem
