@@ -246,7 +246,7 @@ func create_select_limit_widget(app fyne.App, unselected_number *int) *widget.Fo
 	})
 	unselected_limit.SetSelected(option[app.Preferences().Int("limit")])
 
-	return widget.NewFormItem("搭配非勾選的遊戲上限數量", container.NewGridWithRows(1, unselected_limit, widget.NewLabel("願望清單越多，「搭配非勾選的遊戲上限數量」數值設定越高，產出組合的時間越長")))
+	return widget.NewFormItem("搭配非勾選的遊戲上限數量", container.NewGridWithRows(1, unselected_limit, widget.NewLabel("願望清單越多，「搭配非勾選的遊戲上限數量」數值設定越高，預算越高，產出組合的時間越長")))
 }
 
 func is_budget_valid(lower_bound int, upper_bound int) bool {
