@@ -13,6 +13,7 @@ import (
 	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/data/validation"
 	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/storage"
 	"fyne.io/fyne/v2/widget"
 	"github.com/marktwtn/steam-wishlists-combination-generator/crawler"
@@ -68,7 +69,7 @@ func main() {
 	warning := widget.NewLabel("願望清單越多，「搭配非勾選的遊戲上限數量」數值設定越高，預算越高，產出組合的時間越長")
 	warning.Alignment = fyne.TextAlignCenter
 	up.Add(container.NewVBox(config_label, up_config, warning))
-	var down = container.NewHBox()
+	var down = container.NewVBox()
 	var status = widget.NewLabel("無願望清單")
 	var main_box = container.NewBorder(widget.NewSeparator(), widget.NewSeparator(), nil, nil, status)
 	var box = container.NewBorder(up, down, nil, nil, main_box)
@@ -78,13 +79,16 @@ func main() {
 	var combination_count_binding = binding.NewFloat()
 	var combination_channel = make(chan int, 100)
 	var combination_progress = widget.NewProgressBar()
+	down.Add(widget.NewLabel(
+		"注意: 請確保願望清單的網址正確，或是願望清單有被設定成公開(即無痕視窗也可以觀看)，以及有安裝 google chrome 瀏覽器，否則程式會卡住/閃退"))
 	go func() {
 		for {
 			combination_count_binding.Set(float64(<-combination_channel))
 		}
 	}()
 	combination_progress.Bind(combination_count_binding)
-	down.Add(widget.NewButton("從網址抓取資料", func() {
+	buttons := container.NewHBox()
+	buttons.Add(widget.NewButton("從網址抓取資料", func() {
 		var reset = func() {
 			scroll_times_binding.Set(0)
 			check_list = nil
@@ -119,7 +123,8 @@ func main() {
 		box = container.NewBorder(up, down, nil, nil, main_box)
 		window.SetContent(box)
 	}))
-	down.Add(widget.NewButton("產生組合結果並存檔", func() {
+	buttons.Add(layout.NewSpacer())
+	buttons.Add(widget.NewButton("產生組合結果並存檔", func() {
 		wishitems_with_selected = []crawler.Wishitem{}
 		wishitems_without_selected = []crawler.Wishitem{}
 		var without_selected_index = 0
@@ -159,8 +164,7 @@ func main() {
 		}
 		file_save.Show()
 	}))
-	down.Add(widget.NewLabel(
-		"注意: 請確保願望清單的網址正確，或是願望清單有被設定成公開(即無痕視窗也可以觀看)，以及有安裝 google chrome 瀏覽器，否則程式會卡住/閃退"))
+	down.Add(buttons)
 
 	window.SetContent(box)
 	window.ShowAndRun()
