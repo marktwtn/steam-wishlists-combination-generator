@@ -215,6 +215,19 @@ func remove_thousand_comma(input string) string {
 	return strings.ReplaceAll(input, ",", "")
 }
 
+func New_wishitem(new_index uint, new_name string, new_discount_price uint, new_discount_percent uint) Wishitem {
+	var wishitem Wishitem
+	wishitem.Set(new_index, new_name, new_discount_price, new_discount_percent)
+	return wishitem
+}
+
+func (w Wishitem) Set(new_index uint, new_name string, new_discount_price uint, new_discount_percent uint) {
+	w.index = new_index
+	w.name = new_name
+	w.discount_price = new_discount_price
+	w.discount_percent = new_discount_percent
+}
+
 func (w Wishitem) Get_index() uint {
 	return w.index
 }
