@@ -136,12 +136,11 @@ func main() {
 				without_selected_index++
 			}
 		}
-		limit := min(unselected_number, len(wishitems_without_selected), UNSELECTED_MAX)
-		combination_progress.Max = float64(limit)
+		combination_progress.Max = float64(min(unselected_number, len(wishitems_without_selected)))
 		diff, _ := diff_binding.Get()
 		lower_bound, _ := lower_bound_binding.Get()
 		upper_bound, _ := upper_bound_binding.Get()
-		combinations := generate_filtered_combination(limit, upper_bound, wishitems_without_selected, combination_channel)
+		combinations := generate_filtered_combination(unselected_number, upper_bound, wishitems_without_selected, combination_channel)
 		acceptable_combination_list := get_acceptable_combination(uint(diff), lower_bound, upper_bound, combinations)
 		file_save := dialog.NewFileSave(
 			func(writer fyne.URIWriteCloser, err error) {
@@ -263,19 +262,6 @@ func is_budget_valid(lower_bound int, upper_bound int) bool {
 	return true
 }
 
-func min(a int, b int, c int) int {
-	if a < b {
-		if a < c {
-			return a
-		}
-	} else {
-		if b < c {
-			return b
-		}
-	}
-	return c
-}
-
 func generate_filtered_combination(unselected_count int, price_limit int, wishitems []crawler.Wishitem, combination_channel chan int) [][]Combination {
 	var result [][]Combination
 	for index := 0; index <= len(wishitems); index++ {
@@ -289,7 +275,7 @@ func generate_filtered_combination(unselected_count int, price_limit int, wishit
 		}
 	}
 	// Total items in combination > 1
-	for index := 2; index <= unselected_count; index++ {
+	for index := 2; index <= min(unselected_count, len(wishitems)); index++ {
 		for _, prev_combination := range result[index-1] {
 			var last_item_index uint = prev_combination.wishitems_index[len(prev_combination.wishitems_index)-1]
 			if last_item_index != uint(len(wishitems))-1 {
@@ -306,6 +292,13 @@ func generate_filtered_combination(unselected_count int, price_limit int, wishit
 		combination_channel <- index
 	}
 	return result
+}
+
+func min(a int, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }
 
 func get_acceptable_combination(diff uint, lower_bound int, upper_bound int, combinations_list [][]Combination) []Combination {
