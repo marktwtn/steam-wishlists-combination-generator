@@ -44,7 +44,7 @@ func main() {
 	window := new_app.NewWindow("Steam願望清單最佳組合程式")
 	window.SetMaster()
 
-	var up = container.NewVBox()
+	var up = container.NewGridWithColumns(2)
 	var up_crawler = widget.NewForm()
 	var url_binding = binding.NewString()
 	up_crawler.AppendItem(create_url_widget(new_app, &url_binding))
@@ -52,8 +52,9 @@ func main() {
 	var scroll_progress_channel = make(chan int, 10)
 	var scroll_max_channel = make(chan int, 1)
 	up_crawler.AppendItem(create_progress_widget(&scroll_times_binding, scroll_progress_channel, scroll_max_channel))
-	up.Add(up_crawler)
-	up.Add(widget.NewSeparator())
+	crawler_label := widget.NewLabel("爬蟲")
+	crawler_label.Alignment = fyne.TextAlignCenter
+	up.Add(container.NewVBox(crawler_label, up_crawler))
 	var up_config = widget.NewForm()
 	var diff_binding = set_default_and_bind_value(configs["diff"], new_app.Preferences())
 	up_config.AppendItem(create_diff_widget(&diff_binding))
@@ -62,7 +63,11 @@ func main() {
 	up_config.AppendItem(create_budget_widget(&lower_bound_binding, &upper_bound_binding))
 	var unselected_number int
 	up_config.AppendItem(create_select_limit_widget(new_app, &unselected_number))
-	up.Add(up_config)
+	config_label := widget.NewLabel("設定")
+	config_label.Alignment = fyne.TextAlignCenter
+	warning := widget.NewLabel("願望清單越多，「搭配非勾選的遊戲上限數量」數值設定越高，預算越高，產出組合的時間越長")
+	warning.Alignment = fyne.TextAlignCenter
+	up.Add(container.NewVBox(config_label, up_config, warning))
 	var down = container.NewHBox()
 	var status = widget.NewLabel("無願望清單")
 	var main_box = container.NewBorder(widget.NewSeparator(), widget.NewSeparator(), nil, nil, status)
@@ -245,8 +250,7 @@ func create_select_limit_widget(app fyne.App, unselected_number *int) *widget.Fo
 		app.Preferences().SetInt("limit", *unselected_number)
 	})
 	unselected_limit.SetSelected(option[app.Preferences().Int("limit")])
-
-	return widget.NewFormItem("搭配非勾選的遊戲上限數量", container.NewGridWithRows(1, unselected_limit, widget.NewLabel("願望清單越多，「搭配非勾選的遊戲上限數量」數值設定越高，預算越高，產出組合的時間越長")))
+	return widget.NewFormItem("搭配非勾選的遊戲上限數量", container.NewGridWithRows(1, unselected_limit))
 }
 
 func is_budget_valid(lower_bound int, upper_bound int) bool {
