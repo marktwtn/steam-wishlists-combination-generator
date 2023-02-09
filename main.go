@@ -46,16 +46,19 @@ func main() {
 	window.SetMaster()
 
 	var up = container.NewGridWithColumns(2)
-	var up_crawler = widget.NewForm()
+	var up_crawler = container.NewVBox()
+	var up_crawler_form = widget.NewForm()
 	var url_binding = binding.NewString()
-	up_crawler.AppendItem(create_url_widget(new_app, &url_binding))
+	up_crawler_form.AppendItem(create_url_widget(new_app, &url_binding))
 	var scroll_times_binding = binding.NewFloat()
 	var scroll_progress_channel = make(chan int, 10)
 	var scroll_max_channel = make(chan int, 1)
-	up_crawler.AppendItem(create_progress_widget(&scroll_times_binding, scroll_progress_channel, scroll_max_channel))
+	up_crawler_form.AppendItem(create_progress_widget(&scroll_times_binding, scroll_progress_channel, scroll_max_channel))
 	crawler_label := widget.NewLabel("爬蟲")
 	crawler_label.Alignment = fyne.TextAlignCenter
-	up.Add(container.NewVBox(crawler_label, up_crawler))
+	up_crawler.Add(crawler_label)
+	up_crawler.Add(up_crawler_form)
+	up.Add(up_crawler)
 	var up_config = widget.NewForm()
 	var diff_binding = set_default_and_bind_value(configs["diff"], new_app.Preferences())
 	up_config.AppendItem(create_diff_widget(&diff_binding))
@@ -80,16 +83,7 @@ func main() {
 	var combination_count_binding = binding.NewFloat()
 	var combination_channel = make(chan int, 100)
 	var combination_progress = widget.NewProgressBar()
-	down.Add(widget.NewLabel(
-		"注意: 請確保願望清單的網址正確，或是願望清單有被設定成公開(即無痕視窗也可以觀看)，以及有安裝 google chrome 瀏覽器，否則程式會卡住/閃退"))
-	go func() {
-		for {
-			combination_count_binding.Set(float64(<-combination_channel))
-		}
-	}()
-	combination_progress.Bind(combination_count_binding)
-	buttons := container.NewHBox()
-	buttons.Add(widget.NewButton("從網址抓取資料", func() {
+	crawler_button := widget.NewButton("從網址抓取資料", func() {
 		var reset = func() {
 			scroll_times_binding.Set(0)
 			check_list = nil
@@ -124,7 +118,18 @@ func main() {
 		main_box = container.NewBorder(widget.NewSeparator(), widget.NewSeparator(), nil, nil, container.NewBorder(container.NewVBox(status, container.NewGridWithColumns(1, widget.NewLabel("組合結果處理進度: "), combination_progress)), nil, nil, nil, scroll))
 		box = container.NewBorder(up, down, nil, nil, main_box)
 		window.SetContent(box)
-	}))
+	})
+	up_crawler.Add(layout.NewSpacer())
+	up_crawler.Add(container.NewHBox(layout.NewSpacer(), crawler_button, layout.NewSpacer()))
+	down.Add(widget.NewLabel(
+		"注意: 請確保願望清單的網址正確，或是願望清單有被設定成公開(即無痕視窗也可以觀看)，以及有安裝 google chrome 瀏覽器，否則程式會卡住/閃退"))
+	go func() {
+		for {
+			combination_count_binding.Set(float64(<-combination_channel))
+		}
+	}()
+	combination_progress.Bind(combination_count_binding)
+	buttons := container.NewHBox()
 	buttons.Add(layout.NewSpacer())
 	buttons.Add(widget.NewButton("產生組合結果並存檔", func() {
 		wishitems_with_selected = []crawler.Wishitem{}
