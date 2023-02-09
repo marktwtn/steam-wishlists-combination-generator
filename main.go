@@ -71,6 +71,7 @@ func main() {
 	up.Add(container.NewVBox(config_label, up_config, warning))
 	var down = container.NewVBox()
 	var status = widget.NewLabel("無願望清單")
+	status.Alignment = fyne.TextAlignCenter
 	var main_box = container.NewBorder(widget.NewSeparator(), widget.NewSeparator(), nil, nil, status)
 	var box = container.NewBorder(up, down, nil, nil, main_box)
 
@@ -97,6 +98,7 @@ func main() {
 		reset()
 
 		status = widget.NewLabel("抓取資料中......")
+		status.Alignment = fyne.TextAlignCenter
 		main_box = container.NewBorder(widget.NewSeparator(), widget.NewSeparator(), nil, nil, status)
 		box = container.NewBorder(up, down, nil, nil, main_box)
 		window.SetContent(box)
