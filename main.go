@@ -119,10 +119,10 @@ func main() {
 		box = container.NewBorder(up, down, nil, nil, main_box)
 		window.SetContent(box)
 	})
-	up_crawler.Add(layout.NewSpacer())
+	crawler_warning := widget.NewLabel("請確保願望清單的網址正確，或是願望清單有被設定成公開(即無痕視窗也可以觀看)，以及有安裝 google chrome 瀏覽器，否則程式會卡住/閃退")
+	crawler_warning.Alignment = fyne.TextAlignCenter
+	up_crawler.Add(crawler_warning)
 	up_crawler.Add(container.NewHBox(layout.NewSpacer(), crawler_button, layout.NewSpacer()))
-	down.Add(widget.NewLabel(
-		"注意: 請確保願望清單的網址正確，或是願望清單有被設定成公開(即無痕視窗也可以觀看)，以及有安裝 google chrome 瀏覽器，否則程式會卡住/閃退"))
 	go func() {
 		for {
 			combination_count_binding.Set(float64(<-combination_channel))
