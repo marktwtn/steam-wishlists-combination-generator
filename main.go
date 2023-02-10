@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	"fyne.io/fyne/v2"
@@ -17,6 +18,11 @@ import (
 	"fyne.io/fyne/v2/storage"
 	"fyne.io/fyne/v2/widget"
 	"github.com/marktwtn/steam-wishlists-combination-generator/crawler"
+
+	// TODO: The package uses deprecated package syscall.
+	// It should use the package in golang.org/x/sys repository instead.
+	// Need to find another package in the future, or raise a pull request to update the package.
+	"github.com/pbnjay/memory"
 )
 
 type Combination struct {
@@ -104,6 +110,7 @@ func main() {
 		main_box.RemoveAll()
 
 		status = widget.NewLabel("可勾選必列入組合結果的遊戲")
+		status.Alignment = fyne.TextAlignCenter
 		for index := 0; index < len(wishitems); index++ {
 			check_list = append(check_list, binding.NewBool())
 		}
@@ -115,7 +122,23 @@ func main() {
 			new_box_for_scroll.Add(item)
 		}
 		var scroll = container.NewVScroll(new_box_for_scroll)
-		main_box = container.NewBorder(widget.NewSeparator(), widget.NewSeparator(), nil, nil, container.NewBorder(container.NewVBox(status, container.NewGridWithColumns(1, widget.NewLabel("組合結果處理進度: "), combination_progress)), nil, nil, nil, scroll))
+		combination_progress_info := widget.NewLabel("組合結果處理進度")
+		combination_progress_info.Alignment = fyne.TextAlignCenter
+		combination_progress_box := container.NewGridWithRows(2, combination_progress_info, combination_progress)
+		memory_status := widget.NewLabel("")
+		memory_status.Alignment = fyne.TextAlignCenter
+		go func() {
+			for {
+				memory_status.SetText(fmt.Sprintf("剩餘記憶體量: %.2f / %.2f GB", float32(memory.FreeMemory())/(1024*1024*1024), float32(memory.TotalMemory())/(1024*1024*1024)))
+				time.Sleep(1 * time.Second)
+			}
+		}()
+		memory_warning := widget.NewLabel("(若剩餘記憶體量逼近 0 GB ，代表願望清單組合太多，請調低設定裡的「預算範圍」或是「非勾選的遊戲上限數量」)")
+		memory_warning.Wrapping = fyne.TextWrapWord
+		memory_box := container.NewGridWithRows(2, memory_status, memory_warning)
+		check_list_info := container.NewGridWithColumns(3, container.NewGridWithRows(2, layout.NewSpacer(), status), combination_progress_box, memory_box)
+		check_list_box := container.NewBorder(check_list_info, nil, nil, nil, scroll)
+		main_box = container.NewBorder(widget.NewSeparator(), widget.NewSeparator(), nil, nil, check_list_box)
 		box = container.NewBorder(up, down, nil, nil, main_box)
 		window.SetContent(box)
 	})

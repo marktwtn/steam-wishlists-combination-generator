@@ -6,6 +6,7 @@ require (
 	fyne.io/fyne/v2 v2.3.0
 	github.com/chromedp/cdproto v0.0.0-20230109101555-6b041c6303cc
 	github.com/chromedp/chromedp v0.8.7
+	github.com/pbnjay/memory v0.0.0-20210728143218-7b4eea64cf58
 	github.com/stretchr/testify v1.8.1
 )
 
