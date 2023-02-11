@@ -184,6 +184,8 @@ func main() {
 			},
 			window)
 		file_save.SetFileName("steam願望清單組合")
+		file_save.SetConfirmText("儲存")
+		file_save.SetDismissText("取消")
 		if new_app.Preferences().StringWithFallback("save_uri", "") != "" {
 			save_uri := remove_file_in_uri(new_app.Preferences().String("save_uri"))
 			uri, _ := storage.ParseURI(save_uri)
