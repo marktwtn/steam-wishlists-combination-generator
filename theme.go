@@ -12,7 +12,10 @@ type new_theme struct{}
 var _ fyne.Theme = (*new_theme)(nil)
 
 func (*new_theme) Font(style fyne.TextStyle) fyne.Resource {
-	return resourceJfOpenhuninn11Ttf
+	if style.Bold {
+		return resourceTaipeiSansTCBetaBoldTtf
+	}
+	return resourceTaipeiSansTCBetaRegularTtf
 }
 
 func (*new_theme) Color(n fyne.ThemeColorName, v fyne.ThemeVariant) color.Color {

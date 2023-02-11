@@ -60,8 +60,7 @@ func main() {
 	var scroll_progress_channel = make(chan int, 10)
 	var scroll_max_channel = make(chan int, 1)
 	up_crawler_form.AppendItem(create_progress_widget(&scroll_times_binding, scroll_progress_channel, scroll_max_channel))
-	crawler_label := widget.NewLabel("爬蟲")
-	crawler_label.Alignment = fyne.TextAlignCenter
+	crawler_label := widget.NewLabelWithStyle("爬蟲", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 	up_crawler.Add(crawler_label)
 	up_crawler.Add(up_crawler_form)
 	up.Add(up_crawler)
@@ -73,8 +72,7 @@ func main() {
 	up_config.AppendItem(create_budget_widget(&lower_bound_binding, &upper_bound_binding))
 	var unselected_number int
 	up_config.AppendItem(create_select_limit_widget(new_app, &unselected_number))
-	config_label := widget.NewLabel("設定")
-	config_label.Alignment = fyne.TextAlignCenter
+	config_label := widget.NewLabelWithStyle("設定", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 	warning := widget.NewLabel("願望清單越多，「搭配非勾選的遊戲上限數量」數值設定越高，預算越高，產出組合的時間越長")
 	warning.Alignment = fyne.TextAlignCenter
 	up.Add(container.NewVBox(config_label, up_config, warning))
