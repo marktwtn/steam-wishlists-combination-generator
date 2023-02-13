@@ -275,14 +275,14 @@ func create_budget_widget(lower_bound_binding *binding.Int, upper_bound_binding 
 
 func create_select_limit_widget(app fyne.App, unselected_number *int) *widget.FormItem {
 	var option = []string{}
-	for index := 0; index <= UNSELECTED_MAX; index++ {
+	for index := 1; index <= UNSELECTED_MAX; index++ {
 		option = append(option, strconv.Itoa(index))
 	}
 	var unselected_limit = widget.NewSelect(option, func(data string) {
 		*unselected_number, _ = strconv.Atoi(data)
 		app.Preferences().SetInt("limit", *unselected_number)
 	})
-	unselected_limit.SetSelected(option[app.Preferences().Int("limit")])
+	unselected_limit.SetSelected(option[app.Preferences().Int("limit")-1])
 	return widget.NewFormItem("搭配非勾選的遊戲上限數量", container.NewGridWithRows(1, unselected_limit))
 }
 
