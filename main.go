@@ -131,7 +131,8 @@ func main() {
 				time.Sleep(1 * time.Second)
 			}
 		}()
-		memory_warning := widget.NewLabel("(若剩餘記憶體量逼近 0 GB ，代表願望清單組合太多，請調低設定裡的「預算範圍」或是「非勾選的遊戲上限數量」)")
+		memory_warning := widget.NewLabel("若剩餘記憶體量逼近 0 GB ，代表願望清單組合太多，請調低設定裡的「預算範圍」或是「非勾選的遊戲上限數量」")
+		memory_warning.Alignment = fyne.TextAlignCenter
 		memory_warning.Wrapping = fyne.TextWrapWord
 		memory_box := container.NewGridWithRows(2, memory_status, memory_warning)
 		check_list_info := container.NewGridWithColumns(3, container.NewGridWithRows(2, layout.NewSpacer(), status), combination_progress_box, memory_box)
