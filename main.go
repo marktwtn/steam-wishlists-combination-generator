@@ -208,7 +208,7 @@ func create_url_widget(app fyne.App, url_binding *binding.String) *widget.FormIt
 		app.Preferences().SetString("url", url)
 	}
 
-	return widget.NewFormItem("願望清單網址", url_entry)
+	return widget.NewFormItem("願望清單網址", container.NewGridWithRows(1, url_entry))
 }
 
 func create_progress_widget(scroll_times_binding *binding.Float, scroll_progress_channel chan int, scroll_max_channel chan int) *widget.FormItem {
@@ -225,7 +225,7 @@ func create_progress_widget(scroll_times_binding *binding.Float, scroll_progress
 		}
 	}()
 
-	return widget.NewFormItem("抓取願望清單進度", progress)
+	return widget.NewFormItem("抓取願望清單進度", container.NewGridWithRows(1, progress))
 }
 
 func set_default_and_bind_value(config Config, preference fyne.Preferences) binding.Int {
@@ -239,7 +239,7 @@ func create_diff_widget(diff_binding *binding.Int) *widget.FormItem {
 	var diff_entry = widget.NewEntryWithData(binding.IntToString(*diff_binding))
 	diff_entry.Validator = validation.NewRegexp("^[0-9]{0,2}$", "請輸入介於 0 ~ 99 的數字")
 
-	return widget.NewFormItem("金額與信用卡折扣的可容忍差額", diff_entry)
+	return widget.NewFormItem("金額與信用卡折扣的可容忍差額", container.NewGridWithRows(1, diff_entry))
 }
 
 func create_budget_widget(lower_bound_binding *binding.Int, upper_bound_binding *binding.Int) *widget.FormItem {
